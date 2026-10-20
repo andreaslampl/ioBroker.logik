@@ -1,6 +1,6 @@
 {
   "name": "iobroker.logik",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Graphical logic with function blocks (like a small PLC) for ioBroker",
   "author": "andreaslampl",
   "license": "MIT",

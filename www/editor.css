@@ -60,3 +60,33 @@ button.dirty::after { content: ' •'; }
 .wire.selected { stroke: var(--sel); stroke-width: 3; }
 .wire.dragging { stroke: var(--accent); stroke-dasharray: 5 4; pointer-events: none; }
 .wirehit { fill: none; stroke: transparent; stroke-width: 12; cursor: pointer; }
+
+/* data point picker */
+.staterow { display: flex; gap: 6px; }
+.staterow input { flex: 1; min-width: 0; }
+.staterow button { white-space: nowrap; padding: 6px 8px; }
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.picker { background: var(--panel); color: var(--fg); width: min(1100px, 96vw); height: min(760px, 92vh); border-radius: 10px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0, 0, 0, .35); }
+.phead { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.pclose { border: none; background: none; font-size: 16px; }
+.ptools { display: flex; gap: 8px; align-items: center; padding: 8px 14px; }
+.ptools input[type=search] { flex: 1; padding: 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+.ptable { flex: 1; overflow: auto; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.prow { display: grid; grid-template-columns: minmax(260px, 2.2fr) minmax(160px, 2fr) 110px 140px minmax(80px, 1fr); gap: 8px; padding: 4px 14px; border-bottom: 1px solid var(--grid); cursor: pointer; align-items: center; }
+.prow > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prow:hover { background: var(--blockHead); }
+.prow.sel { background: var(--accent); color: #fff; }
+.prow.sel .muted, .prow.sel .ptype, .prow.sel .prole { color: #fff; }
+.prow.readonly .pseg, .prow.readonly .pname { opacity: .7; }
+.phdr { position: sticky; top: 0; background: var(--panel); font-weight: 600; cursor: default; z-index: 1; }
+.phdr:hover { background: var(--panel); }
+.ptog { display: inline-block; width: 16px; color: var(--muted); }
+.pfolder { font-weight: 600; }
+.ptype, .prole { color: var(--muted); font-size: 12px; }
+.pval { font-family: ui-monospace, monospace; font-size: 12px; }
+.pidcol { font-family: ui-monospace, monospace; font-size: 12px; }
+.pmsg { padding: 16px; }
+.pmsg.error { color: #b42318; }
+.pfoot { display: flex; gap: 8px; align-items: center; padding: 10px 14px; }
+.pinfo { flex: 1; min-width: 0; }
+.pid { font-family: ui-monospace, monospace; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -251,6 +251,7 @@ function addBlock(type, at) {
   setDirty(true);
   render();
   renderProps();
+  if (type === 'input' || type === 'output') pickState(b);
 }
 
 // ---------------- properties ----------------
@@ -322,7 +323,20 @@ function renderProps() {
     };
     input.onchange = apply;
     if (p.type === 'text' && b.type === 'comment') input.oninput = apply;
-    box.appendChild(input);
+    if (p.type === 'state') {
+      const row = document.createElement('div');
+      row.className = 'staterow';
+      row.appendChild(input);
+      const browse = document.createElement('button');
+      browse.type = 'button';
+      browse.textContent = '📂 Auswählen';
+      browse.title = 'Datenpunkt aus den ioBroker-Objekten wählen';
+      browse.onclick = () => pickState(b);
+      row.appendChild(browse);
+      box.appendChild(row);
+    } else {
+      box.appendChild(input);
+    }
     let nameEl = null;
     if (p.type === 'state') {
       nameEl = document.createElement('div');
@@ -367,6 +381,22 @@ async function updateStateName(id, nameEl) {
   render();
 }
 
+/** Object browser for the data point of an input/output block. */
+async function pickState(b) {
+  const res = await Picker.open({
+    api,
+    title: b.type === 'output' ? 'Datenpunkt für Ausgang wählen (wird geschrieben)' : 'Datenpunkt für Eingang wählen (wird gelesen)',
+    current: b.params.state,
+    forOutput: b.type === 'output',
+  });
+  if (!res || !blockById(b.id)) return;
+  b.params.state = res.id;
+  stateNames[res.id] = res.name || '';
+  setDirty(true);
+  render();
+  renderProps();
+}
+
 let searchTimer = null;
 function searchStates(text) {
   clearTimeout(searchTimer);
@@ -392,6 +422,7 @@ function searchStates(text) {
 // ---------------- canvas interaction ----------------
 
 let drag = null;
+const lastDown = { id: null, at: 0 };
 
 function svgTarget(e) {
   return e.target.closest ? e.target : null;
@@ -411,6 +442,14 @@ $('canvas').addEventListener('pointerdown', e => {
   } else if (t.closest('g.block')) {
     const id = t.closest('g.block').getAttribute('data-block');
     const b = blockById(id);
+    // double click on an input/output opens the data point browser (blocks are re-rendered, so no dblclick event)
+    const now = Date.now();
+    if (lastDown.id === id && now - lastDown.at < 400 && (b.type === 'input' || b.type === 'output')) {
+      lastDown.at = 0;
+      pickState(b);
+      return;
+    }
+    Object.assign(lastDown, { id, at: now });
     selected = { kind: 'block', id };
     drag = { kind: 'move', block: b, dx: pt.x - b.x, dy: pt.y - b.y, moved: false };
     render();
@@ -499,6 +538,7 @@ function deleteSelected() {
 }
 
 document.addEventListener('keydown', e => {
+  if (document.querySelector('.overlay')) return;
   const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
   if (!typing && (e.key === 'Delete' || e.key === 'Backspace')) {
     e.preventDefault();

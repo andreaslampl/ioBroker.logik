@@ -24,6 +24,8 @@ class FakeAdapter extends EventEmitter {
             'demo.exitMotion': { common: { name: 'Austritt Bewegungsmelder', type: 'boolean' } },
             'demo.door': { common: { name: 'Magnetkontakt Tür', type: 'boolean' } },
             'demo.dimmer': { common: { name: 'Licht Kabine', type: 'number' } },
+            'demo.sensor': { type: 'channel', common: { name: 'Sensoren' } },
+            'demo.sensor.temp': { common: { name: 'Temperatur', type: 'number', unit: '°C', write: false } },
         };
         this.writes = [];
         this.log = { debug() {}, info() {}, warn() {}, error() {} };
@@ -35,8 +37,12 @@ class FakeAdapter extends EventEmitter {
     async getForeignObjectAsync(id) {
         return this.objects[id] ? { _id: id, ...this.objects[id] } : null;
     }
-    async getForeignObjectsAsync() {
-        return Object.fromEntries(Object.entries(this.objects).filter(([id]) => id.startsWith('demo.')).map(([id, o]) => [id, { _id: id, ...o }]));
+    async getForeignObjectsAsync(pattern, type) {
+        return Object.fromEntries(
+            Object.entries(this.objects)
+                .filter(([id, o]) => id.startsWith('demo.') && (o.type || 'state') === type)
+                .map(([id, o]) => [id, { _id: id, type: 'state', ...o }]),
+        );
     }
     async getForeignStateAsync(id) {
         return this.foreign[id] || null;
@@ -93,6 +99,14 @@ test('adapter: example from the editor API, enable it, the solarium logic switch
     assert.equal((await api('programs')).length, 1);
     const found = await api('states?q=t%C3%BCrleser');
     assert.deepEqual(found.map(s => s.id), ['demo.booked']);
+
+    // object browser: all states with type/unit/write, folder names, current values
+    const objects = await api('objects', { headers: { 'Accept-Encoding': 'gzip' } });
+    assert.equal(objects.states.length, 6);
+    assert.deepEqual(objects.states.find(s => s.id === 'demo.sensor.temp'), { id: 'demo.sensor.temp', name: 'Temperatur', type: 'number', role: '', unit: '°C', write: false });
+    assert.equal(objects.folders['demo.sensor'], 'Sensoren');
+    adapter.foreign['demo.sensor.temp'] = { val: 21.5, ack: true };
+    assert.deepEqual(await api('values', { method: 'POST', body: JSON.stringify(['demo.sensor.temp', 'demo.door']) }), { 'demo.sensor.temp': 21.5, 'demo.door': null });
 
     const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
     const lives = [];

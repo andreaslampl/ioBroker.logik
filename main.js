@@ -53,6 +53,8 @@ class Logik extends utils.Adapter {
             accessKey: key,
             log: this.log,
             searchStates: (q, exact) => this.searchStates(q, exact),
+            objectList: fresh => this.objectList(fresh),
+            stateValues: ids => this.stateValues(ids),
         });
         try {
             await this.server.listen(port);
@@ -133,23 +135,53 @@ class Logik extends utils.Adapter {
         }
     }
 
-    /** Data point search for the editor. */
-    async searchStates(q, exact) {
-        if (!this.stateCache || Date.now() - this.stateCache.at > 300000) {
-            const objs = await this.getForeignObjectsAsync('*', 'state');
-            const lang = 'de';
-            const name = n => (typeof n === 'object' && n ? n[lang] || n.en || Object.values(n)[0] || '' : String(n || ''));
+    /** All states (plus names of devices/channels/folders) for the editor, cached for 5 min. */
+    async objectList(fresh) {
+        if (fresh || !this.stateCache || Date.now() - this.stateCache.at > 300000) {
+            const name = n => (typeof n === 'object' && n ? n.de || n.en || Object.values(n)[0] || '' : String(n || ''));
+            const states = await this.getForeignObjectsAsync('*', 'state');
+            const folders = {};
+            for (const type of ['device', 'channel', 'folder', 'instance', 'adapter']) {
+                const objs = await this.getForeignObjectsAsync('*', type).catch(() => ({}));
+                for (const o of Object.values(objs || {})) {
+                    if (o && o.type === type && o.common && o.common.name) {
+                        folders[o._id] = name(o.common.name);
+                    }
+                }
+            }
             this.stateCache = {
                 at: Date.now(),
-                list: Object.values(objs).map(o => ({ id: o._id, name: name(o.common && o.common.name), type: o.common ? o.common.type : '' })),
+                folders,
+                list: Object.values(states).map(o => {
+                    const c = o.common || {};
+                    return { id: o._id, name: name(c.name), type: c.type || '', role: c.role || '', unit: c.unit || '', write: c.write !== false };
+                }),
             };
         }
+        return this.stateCache;
+    }
+
+    /** Data point search for the editor. */
+    async searchStates(q, exact) {
+        const { list } = await this.objectList();
         const text = String(q || '').toLowerCase();
         if (exact) {
-            return this.stateCache.list.filter(s => s.id === q).slice(0, 1);
+            return list.filter(s => s.id === q).slice(0, 1);
         }
         const words = text.split(/\s+/).filter(Boolean);
-        return this.stateCache.list.filter(s => words.every(w => s.id.toLowerCase().includes(w) || s.name.toLowerCase().includes(w))).slice(0, 50);
+        return list.filter(s => words.every(w => s.id.toLowerCase().includes(w) || s.name.toLowerCase().includes(w))).slice(0, 50);
+    }
+
+    /** Current values for the object browser (at most 300 at once). */
+    async stateValues(ids) {
+        const out = {};
+        await Promise.all(
+            ids.slice(0, 300).map(async id => {
+                const st = await this.getForeignStateAsync(id).catch(() => null);
+                out[id] = st ? st.val : null;
+            }),
+        );
+        return out;
     }
 
     saveRetain() {

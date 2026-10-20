@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "news": {
+      "0.2.0": {
+        "en": "Object browser for inputs/outputs: choose data points from the ioBroker object tree (search, names, types, current values); opens when adding an input/output and on double click",
+        "de": "Objekt-Auswahl für Ein-/Ausgänge: Datenpunkte aus dem ioBroker-Objektbaum wählen (Suche, Namen, Typen, aktuelle Werte); öffnet beim Hinzufügen eines Ein-/Ausgangs und per Doppelklick"
+      },
       "0.1.0": {
         "en": "Initial release: graphical function block logic (like a small PLC) with editor in the browser",
         "de": "Erste Version: grafische Logik mit Funktionsbausteinen (wie eine Kleinsteuerung) mit Editor im Browser"

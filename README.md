@@ -20,8 +20,13 @@ Datenpunkt `logik.0.info.editorUrl`, z. B. `http://<ioBroker-IP>:8097/`.
 - **Bausteine**: links anklicken (erscheint in der Mitte) oder auf die Fläche ziehen.
 - **Verbinden**: vom **Ausgang** (Punkt rechts) zu einem **Eingang** (Punkt links) ziehen. Ein
   Eingang hat genau eine Verbindung; eine neue ersetzt die alte.
-- **Einstellen**: Baustein anklicken → rechts die Parameter. Beim Datenpunkt hilft die Suche
-  (Teil der ID oder des Namens eintippen, z. B. „licht küche“).
+- **Datenpunkt wählen**: Beim Hinzufügen eines Eingangs/Ausgangs, per **Doppelklick** darauf oder
+  mit **📂 Auswählen** rechts öffnet sich die Objekt-Auswahl wie bei Blockly: Objektbaum mit Namen,
+  Typ, Rolle und aktuellem Wert, Suchfeld (z. B. „licht küche“). Anklicken + **Übernehmen** oder
+  Doppelklick. Bei Ausgängen blendet „nur schreibbare“ reine Anzeigewerte aus. **⟳** lädt neue
+  Objekte nach.
+- **Einstellen**: Baustein anklicken → rechts die Parameter. Die ID kann auch direkt eingetippt
+  oder aus dem Admin (Objekte → ID kopieren) eingefügt werden.
 - **Löschen**: Baustein oder Leitung anklicken, dann `Entf`.
 - **Verschieben/Zoomen**: Fläche ziehen, Mausrad; **⤢ Alles** zeigt das ganze Programm.
 - **Speichern** (`Strg+S`): das Programm läuft sofort mit den neuen Einstellungen.

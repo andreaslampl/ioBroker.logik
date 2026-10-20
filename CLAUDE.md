@@ -20,6 +20,10 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
   validates editor input; templates start disabled.
 - `lib/server.js` – editor files (www/), REST API (`/api/catalog`, `/api/programs`, `/api/states`),
   `/ws` live snapshots (throttled 300 ms). Optional access key for API/WS.
+- `www/picker.js` – object browser (0.2.0, asked for by the owner "wie bei Blockly"): tree by ID
+  segments (adapter.instance as first level), folder names, search, values via `POST /api/values`,
+  objects via `/api/objects` (cached 5 min in main.js, `?fresh=1` reloads, gzip). Opens on adding an
+  input/output, on double click (detected in pointerdown - blocks are re-rendered) and via 📂 Auswählen.
 - `www/` – vanilla JS SVG editor: palette, drag/drop, wiring by dragging between ports, params panel
   with state search (datalist), program tabs, fit view, live colouring and remaining times.
 - `main.js` – subscribes the input data points (foreign), presets values, writes outputs
