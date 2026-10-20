@@ -26,6 +26,9 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
   input/output, on double click (detected in pointerdown - blocks are re-rendered) and via 📂 Auswählen.
 - `www/` – vanilla JS SVG editor: palette, drag/drop, wiring by dragging between ports, params panel
   with state search (datalist), program tabs, fit view, live colouring and remaining times.
+- Live view of I/O blocks (0.3.0, owner wants to see that signals really arrive): main.js also
+  subscribes outputs and keeps `{val, ack, ts}` per data point (`stateInfo`); live messages carry
+  `states` + `now` (clock offset for "vor 5 s"); output line soll/ist with ✓ (ack) ⏳ (sent) ≠ (differs).
 - `main.js` – subscribes the input data points (foreign), presets values, writes outputs
   (`setForeignState` ack=false; type from the object or the output's mode), saves remanent values
   every 30 s and on unload.

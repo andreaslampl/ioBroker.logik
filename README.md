@@ -32,6 +32,13 @@ Datenpunkt `logik.0.info.editorUrl`, z. B. `http://<ioBroker-IP>:8097/`.
 - **Speichern** (`Strg+S`): das Programm läuft sofort mit den neuen Einstellungen.
 - **aktiv**: Programm ein/aus. **Live**: Leitungen mit Wert 1 werden grün, Zahlenwerte stehen an
   den Ausgängen, laufende Zeiten mit ⏱ Restzeit.
+- **Live bei Ein-/Ausgängen**: Die Lampe oben rechts leuchtet grün, wenn das Signal ein ist. Die
+  unterste Zeile zeigt den Wert, wie er in ioBroker steht:
+  - Eingang: `true · vor 5 s` - Wert und wann der Datenpunkt zuletzt aktualisiert wurde. Bei jeder
+    Aktualisierung blinkt der Rahmen kurz blau, so sieht man, dass das Signal wirklich ankommt.
+  - Ausgang: `soll 20 · ist 20 % ✓` - **soll** = was die Logik ausgibt, **ist** = Wert in ioBroker.
+    ✓ = vom Gerät bestätigt, ⏳ = gesendet, noch nicht bestätigt, ≠ = Datenpunkt hat einen anderen
+    Wert (z. B. von Hand geschaltet - Ausgänge werden nur bei einer Änderung geschrieben).
 
 Ausgänge werden geschrieben, **wenn sich das Ergebnis ändert** - nicht beim Start. Ein von Hand
 geschaltetes Licht wird also nicht überschrieben, nur weil der Adapter neu startet.

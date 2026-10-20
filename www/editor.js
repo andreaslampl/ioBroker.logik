@@ -15,6 +15,7 @@ let prog = null; // program being edited (copy)
 let dirty = false;
 let selected = null; // {kind: 'block'|'wire', id}
 let live = null;
+let clockOffset = 0; // adapter clock minus browser clock, for "vor 5 s"
 let ws = null;
 const view = { x: 40, y: 20, k: 1 };
 const stateNames = {};
@@ -75,7 +76,7 @@ function height(b) {
   const d = catalog[b.type];
   if (b.type === 'comment') return 20 + wrap(b.params.text).length * 15;
   const rows = Math.max(d.inputs.length, d.outputs.length, 1);
-  return HEAD + 10 + rows * ROW + (b.type === 'input' || b.type === 'output' ? 16 : 0);
+  return HEAD + 10 + rows * ROW + (b.type === 'input' || b.type === 'output' ? 32 : 0);
 }
 
 function portPos(b, port, isOut) {
@@ -174,7 +175,10 @@ function renderBlock(parent, b) {
   });
   if (b.type === 'input' || b.type === 'output') {
     const name = stateNames[b.params.state];
-    el('text', { class: 'small', x: b.type === 'input' ? 8 : 30, y: h - 8 }, g).textContent = name ? (name.length > 26 ? name.slice(0, 25) + '…' : name) : shortState(b.params.state);
+    el('text', { class: 'small', x: b.type === 'input' ? 8 : 30, y: h - 24 }, g).textContent = name ? (name.length > 26 ? name.slice(0, 25) + '…' : name) : shortState(b.params.state);
+    // live: lamp in the head, value as ioBroker has it in the last line
+    el('circle', { class: 'lamp', cx: w - 14, cy: 13, r: 6, 'data-lamp': b.id }, g);
+    el('text', { class: 'iolive', x: b.type === 'input' ? 8 : 30, y: h - 8, 'data-io': b.id }, g);
   }
   el('text', { class: 'small', x: w - 6, y: h - 6, 'text-anchor': 'end', 'data-remaining': b.id }, g);
 }
@@ -205,6 +209,74 @@ function applyLive() {
     }
     g.classList.toggle('active', active);
   }
+  applyIoLive(on);
+}
+
+/** Lamp and the value in ioBroker for input/output blocks; a short flash when the data point is updated. */
+const lastTs = {};
+function applyIoLive(on) {
+  for (const t of document.querySelectorAll('[data-io]')) {
+    const id = t.getAttribute('data-io');
+    const b = blockById(id);
+    const lamp = document.querySelector('[data-lamp="' + id + '"]');
+    const info = ioInfo(b, on);
+    t.textContent = info ? info.text : '';
+    t.setAttribute('class', 'iolive' + (info && info.cls ? ' ' + info.cls : ''));
+    lamp.setAttribute('class', 'lamp' + (info ? (info.on ? ' on' : ' off') : ''));
+    const st = info && info.st;
+    if (st && st.ts && lastTs[id] !== undefined && lastTs[id] !== st.ts) {
+      const g = t.closest('g.block');
+      g.classList.remove('flash');
+      void g.getBBox();
+      g.classList.add('flash');
+    }
+    lastTs[id] = st ? st.ts : null;
+  }
+}
+
+function fmtVal(v, unit) {
+  if (v === null || v === undefined) return '–';
+  if (typeof v === 'number') v = Math.round(v * 100) / 100;
+  let t = typeof v === 'object' ? JSON.stringify(v) : String(v);
+  if (t.length > 12) t = t.slice(0, 11) + '…';
+  return t + (unit ? ' ' + unit : '');
+}
+
+function ago(ts) {
+  const s = Math.max(0, Math.round((Date.now() + clockOffset - ts) / 1000));
+  if (s < 60) return 'vor ' + s + ' s';
+  if (s < 3600) return 'vor ' + Math.floor(s / 60) + ' min';
+  if (s < 86400) return 'vor ' + Math.floor(s / 3600) + ' h';
+  return 'vor ' + Math.floor(s / 86400) + ' d';
+}
+
+function num(v) {
+  if (typeof v === 'boolean') return v ? 1 : 0;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** What the live line of an input/output shows: {text, on, cls, st} or null when live is off. */
+function ioInfo(b, on) {
+  if (!on || !b || !b.params.state) return null;
+  const st = live.states ? live.states[b.params.state] : undefined;
+  const block = on[b.id] || {};
+  if (b.type === 'input') {
+    const q = block.out ? block.out.Q : 0;
+    if (!st) return { text: '⚠ kein Wert in ioBroker', on: false, cls: 'warn', st };
+    return { text: fmtVal(st.val, st.unit) + (st.ts ? ' · ' + ago(st.ts) : ''), on: Boolean(q), cls: '', st };
+  }
+  const soll = block.out ? block.out.I : 0;
+  if (!st) return { text: 'soll ' + fmtVal(soll) + ' · ist –', on: Boolean(soll), cls: 'warn', st };
+  const same = num(st.val) === num(soll);
+  // ack = the device (adapter) confirmed the value; without ack it was only sent
+  const mark = !same ? ' ≠' : st.ack ? ' ✓' : ' ⏳';
+  return {
+    text: 'soll ' + fmtVal(soll) + ' · ist ' + fmtVal(st.val, st.unit) + mark,
+    on: Boolean(soll),
+    cls: !same ? 'warn' : st.ack ? 'ok' : 'wait',
+    st,
+  };
 }
 
 // ---------------- palette ----------------
@@ -356,6 +428,15 @@ function renderProps() {
     v.className = 'muted';
     v.textContent = 'Live: ' + JSON.stringify(live.blocks[b.id].out);
     box.appendChild(v);
+    const st = live.states && b.params && b.params.state ? live.states[b.params.state] : undefined;
+    if (b.type === 'input' || b.type === 'output') {
+      const d = document.createElement('p');
+      d.className = 'muted';
+      d.textContent = st
+        ? 'In ioBroker: ' + fmtVal(st.val, st.unit) + (st.ack ? ' (bestätigt)' : ' (gesendet, noch nicht bestätigt)') + (st.ts ? ', aktualisiert ' + new Date(st.ts).toLocaleTimeString() : '')
+        : 'In ioBroker: kein Wert (Datenpunkt fehlt oder wurde noch nie geschrieben)';
+      box.appendChild(d);
+    }
   }
   const del = document.createElement('button');
   del.type = 'button';
@@ -643,6 +724,10 @@ $('enabled').onchange = () => {
   renderTabs();
 };
 $('live').onchange = () => applyLive();
+// keep "vor 5 s" current
+setInterval(() => {
+  if ($('live').checked && live) applyIoLive(prog && live.program === prog.id ? live.blocks : null);
+}, 1000);
 $('fitView').onclick = () => {
   fit();
   render();
@@ -667,6 +752,7 @@ function connect() {
     const msg = JSON.parse(ev.data);
     if (msg.type === 'live' && prog && msg.program === prog.id) {
       live = msg;
+      if (msg.now) clockOffset = msg.now - Date.now();
       applyLive();
     } else if (msg.type === 'programs' && !dirty) {
       loadPrograms(prog && prog.id);

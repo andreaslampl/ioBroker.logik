@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "news": {
+      "0.3.0": {
+        "en": "Live view in input/output blocks: lamp, value as ioBroker has it, time of the last update, outputs show target/actual value and whether the device confirmed it",
+        "de": "Live-Anzeige in Ein-/Ausgängen: Lampe, Wert wie in ioBroker, Zeit der letzten Aktualisierung, Ausgänge zeigen Soll/Ist und ob das Gerät bestätigt hat"
+      },
       "0.2.0": {
         "en": "Object browser for inputs/outputs: choose data points from the ioBroker object tree (search, names, types, current values); opens when adding an input/output and on double click",
         "de": "Objekt-Auswahl für Ein-/Ausgänge: Datenpunkte aus dem ioBroker-Objektbaum wählen (Suche, Namen, Typen, aktuelle Werte); öffnet beim Hinzufügen eines Ein-/Ausgangs und per Doppelklick"

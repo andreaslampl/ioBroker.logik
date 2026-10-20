@@ -51,12 +51,14 @@ class FakeAdapter extends EventEmitter {
     async unsubscribeForeignStatesAsync() {}
     async setForeignStateAsync(id, val, ack) {
         this.writes.push([id, val, ack]);
-        this.foreign[id] = { val, ack };
+        this.foreign[id] = { val, ack, ts: Date.now() };
+        // like ioBroker: subscribers see their own writes
+        setImmediate(() => this.emit('stateChange', id, this.foreign[id]));
     }
     /** a device or VIS changes a data point */
     change(id, val) {
-        this.foreign[id] = { val, ack: true };
-        this.emit('stateChange', id, { val, ack: true });
+        this.foreign[id] = { val, ack: true, ts: Date.now() };
+        this.emit('stateChange', id, this.foreign[id]);
     }
 }
 
@@ -128,6 +130,16 @@ test('adapter: example from the editor API, enable it, the solarium logic switch
     adapter.change('demo.solarium', true);
     await until(() => adapter.writes.at(-1)[1] === 20);
     await until(() => lives.some(l => l.blocks.light && l.blocks.light.out.AQ === 20));
+    // live view of inputs/outputs: values as ioBroker has them (output only sent, not yet confirmed)
+    await until(() => lives.some(l => l.states['demo.dimmer'] && l.states['demo.dimmer'].val === 20));
+    const last = lives.at(-1);
+    assert.equal(last.states['demo.dimmer'].ack, false);
+    assert.equal(last.states['demo.solarium'].val, true);
+    assert.equal(last.states['demo.solarium'].ack, true);
+    assert.equal(last.blocks.light.state, undefined);
+    assert.ok(Object.values(last.blocks).some(b => b.state === 'demo.dimmer'));
+    adapter.change('demo.dimmer', 20); // the dimmer confirms
+    await until(() => lives.at(-1).states['demo.dimmer'].ack === true);
 
     // remanent: "cabin occupied" survives a restart of the logic (saved on unload)
     adapter.saveRetain();

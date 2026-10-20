@@ -50,6 +50,15 @@ button.dirty::after { content: ' •'; }
 .block text { fill: var(--fg); font-size: 12px; pointer-events: none; user-select: none; }
 .block text.sym { font-size: 15px; font-weight: 700; }
 .block text.small { font-size: 10px; fill: var(--muted); }
+.lamp { fill: transparent; stroke: none; }
+.lamp.off { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
+.lamp.on { fill: var(--on); stroke: var(--on); stroke-width: 1.5; filter: drop-shadow(0 0 3px var(--on)); }
+.block text.iolive { font-size: 11px; font-weight: 600; fill: var(--fg); }
+.block text.iolive.ok { fill: var(--on); }
+.block text.iolive.wait { fill: #b7791f; }
+.block text.iolive.warn { fill: #c2410c; }
+@keyframes flash { from { stroke: var(--accent); stroke-width: 4; } to { stroke-width: 1.5; } }
+.block.flash rect.body { animation: flash .8s ease-out; }
 .block text.val { font-size: 11px; font-weight: 700; fill: var(--on); }
 .block { cursor: move; }
 .port { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; cursor: crosshair; }

@@ -23,8 +23,11 @@ class Logik extends utils.Adapter {
         this.engine = null;
         this.store = null;
         this.server = null;
-        this.subscribed = new Set();
+        this.subscribed = new Set(); // inputs and outputs (outputs for the live view)
+        this.inputIds = new Set();
         this.types = new Map(); // stateId -> common.type, for writing outputs
+        this.units = new Map(); // stateId -> common.unit, for the live view
+        this.liveStates = new Map(); // stateId -> {val, ack, ts} as in ioBroker
         this.stateCache = null;
         this.lastRetain = '';
         this.on('ready', this.onReady.bind(this));
@@ -53,6 +56,7 @@ class Logik extends utils.Adapter {
             accessKey: key,
             log: this.log,
             searchStates: (q, exact) => this.searchStates(q, exact),
+            stateInfo: id => this.stateInfo(id),
             objectList: fresh => this.objectList(fresh),
             stateValues: ids => this.stateValues(ids),
         });
@@ -80,22 +84,26 @@ class Logik extends utils.Adapter {
         probe.load(programs.map(p => ({ ...p, enabled: p.enabled !== false })));
         probe.stop();
         const { inputs, outputs } = probe.stateIds();
+        const all = new Set([...inputs, ...outputs]);
         for (const id of this.subscribed) {
-            if (!inputs.includes(id)) {
+            if (!all.has(id)) {
                 await this.unsubscribeForeignStatesAsync(id);
                 this.subscribed.delete(id);
+                this.liveStates.delete(id);
             }
         }
-        for (const id of inputs) {
+        this.inputIds = new Set(inputs);
+        for (const id of all) {
             if (!this.subscribed.has(id)) {
                 await this.subscribeForeignStatesAsync(id);
                 this.subscribed.add(id);
             }
             const st = await this.getForeignStateAsync(id).catch(() => null);
-            this.engine.preset(id, st ? st.val : 0);
-        }
-        for (const id of outputs) {
-            await this.typeOf(id);
+            this.liveStates.set(id, st ? { val: st.val, ack: st.ack, ts: st.ts } : null);
+            if (this.inputIds.has(id)) {
+                this.engine.preset(id, st ? st.val : 0);
+            }
+            await this.typeOf(id, outputs.includes(id));
         }
         this.engine.load(programs, keep);
         const active = programs.filter(p => p.enabled !== false).length;
@@ -103,15 +111,22 @@ class Logik extends utils.Adapter {
         await this.setState('info.programs', active, true);
     }
 
-    async typeOf(id) {
+    async typeOf(id, isOutput = true) {
         if (!this.types.has(id)) {
             const obj = await this.getForeignObjectAsync(id).catch(() => null);
             if (!obj) {
-                this.log.warn(`Output data point ${id} does not exist`);
+                this.log.warn(`${isOutput ? 'Output' : 'Input'} data point ${id} does not exist`);
             }
             this.types.set(id, obj && obj.common ? obj.common.type : '');
+            this.units.set(id, (obj && obj.common && obj.common.unit) || '');
         }
         return this.types.get(id);
+    }
+
+    /** Value of an input/output data point as ioBroker has it, for the live view. */
+    stateInfo(id) {
+        const st = this.liveStates.get(id);
+        return st ? { ...st, unit: this.units.get(id) || '' } : null;
     }
 
     async writeOutput(id, value, mode) {
@@ -130,8 +145,15 @@ class Logik extends utils.Adapter {
     }
 
     onStateChange(id, state) {
-        if (state && this.engine && this.subscribed.has(id)) {
+        if (!this.subscribed.has(id)) {
+            return;
+        }
+        this.liveStates.set(id, state ? { val: state.val, ack: state.ack, ts: state.ts } : null);
+        if (state && this.engine && this.inputIds.has(id)) {
             this.engine.setValue(id, state.val);
+        }
+        if (this.server) {
+            this.server.stateChanged();
         }
     }
 
