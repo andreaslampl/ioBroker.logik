@@ -1,0 +1,62 @@
+:root {
+  --bg: #f4f5f7; --panel: #fff; --fg: #1f2328; --muted: #6b7280; --line: #d0d4da; --grid: #e6e8eb;
+  --block: #fff; --blockHead: #e8eef8; --accent: #1f6feb; --on: #1a9e48; --sel: #f59e0b;
+  --io: #fef3c7; --note: #fff8c5;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #111418; --panel: #1b1f24; --fg: #e6e8eb; --muted: #9aa3ad; --line: #3a414a; --grid: #1f242a;
+          --block: #232830; --blockHead: #2b3542; --io: #3a3320; --note: #3a3620; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; font-size: 14px; }
+body { display: flex; flex-direction: column; }
+button { font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.dirty::after { content: ' •'; }
+#top { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+#tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+#tabs button.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+#tabs button.off { opacity: .55; }
+.grow { flex: 1; }
+.switch { display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+#main { flex: 1; display: flex; min-height: 0; }
+#palette { width: 190px; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); padding: 8px; }
+#palette h4 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; color: var(--muted); }
+#palette .item { display: flex; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; cursor: grab; user-select: none; }
+#palette .item:hover { background: var(--blockHead); }
+#palette .sym { min-width: 34px; text-align: center; font-weight: 700; border: 1px solid var(--line); border-radius: 4px; padding: 1px 2px; font-size: 12px; }
+#canvasWrap { flex: 1; position: relative; overflow: hidden; }
+#canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+#hint { position: absolute; left: 8px; bottom: 6px; color: var(--muted); font-size: 12px; pointer-events: none; }
+#props { width: 280px; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line); padding: 12px; }
+#props h3 { margin: 0 0 4px; }
+#props label { display: block; margin: 10px 0 3px; font-weight: 600; }
+#props input[type=text], #props input[type=number], #props select, #props textarea { width: 100%; padding: 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+#props textarea { min-height: 80px; }
+#props .help { color: var(--muted); font-size: 12px; margin-top: 2px; }
+#props .statename { color: var(--muted); font-size: 12px; margin-top: 3px; }
+.muted { color: var(--muted); }
+#msg { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #333; color: #fff; padding: 8px 14px; border-radius: 8px; display: none; z-index: 10; }
+#msg.error { background: #b42318; }
+
+/* blocks */
+.block rect.body { fill: var(--block); stroke: var(--line); stroke-width: 1.5; rx: 6; }
+.block.io rect.body { fill: var(--io); }
+.block.note rect.body { fill: var(--note); stroke-dasharray: 4 3; }
+.block rect.head { fill: var(--blockHead); }
+.block.selected rect.body { stroke: var(--sel); stroke-width: 2.5; }
+.block.active rect.body { stroke: var(--on); stroke-width: 2.5; }
+.block text { fill: var(--fg); font-size: 12px; pointer-events: none; user-select: none; }
+.block text.sym { font-size: 15px; font-weight: 700; }
+.block text.small { font-size: 10px; fill: var(--muted); }
+.block text.val { font-size: 11px; font-weight: 700; fill: var(--on); }
+.block { cursor: move; }
+.port { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; cursor: crosshair; }
+.port:hover, .port.target { fill: var(--accent); stroke: var(--accent); }
+.port.on { fill: var(--on); stroke: var(--on); }
+.wire { fill: none; stroke: var(--muted); stroke-width: 2; }
+.wire.on { stroke: var(--on); stroke-width: 3; }
+.wire.selected { stroke: var(--sel); stroke-width: 3; }
+.wire.dragging { stroke: var(--accent); stroke-dasharray: 5 4; pointer-events: none; }
+.wirehit { fill: none; stroke: transparent; stroke-width: 12; cursor: pointer; }

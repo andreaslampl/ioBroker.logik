@@ -1,0 +1,34 @@
+{
+  "i18n": true,
+  "type": "panel",
+  "items": {
+    "help": {
+      "type": "staticText",
+      "text": "The programs are drawn in the editor: open it with the instance link (globe icon) or the address in info.editorUrl, e.g. http://<ioBroker-IP>:8097/",
+      "xs": 12
+    },
+    "port": {
+      "type": "port",
+      "label": "Editor port",
+      "default": 8097,
+      "newLine": true,
+      "xs": 12,
+      "sm": 3
+    },
+    "publicHost": {
+      "type": "text",
+      "label": "Address of the ioBroker server for the link (optional)",
+      "help": "Empty = detected automatically",
+      "xs": 12,
+      "sm": 5
+    },
+    "accessKey": {
+      "type": "password",
+      "label": "Access key (optional)",
+      "help": "If set, the editor must be opened with ?key=... (anybody who can open the editor can switch data points)",
+      "newLine": true,
+      "xs": 12,
+      "sm": 5
+    }
+  }
+}

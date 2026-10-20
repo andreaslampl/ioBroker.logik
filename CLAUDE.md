@@ -1,0 +1,37 @@
+# ioBroker.logik
+
+ioBroker adapter: graphical function block logic like a small PLC (owner knows Siemens LOGO! and
+finds Blockly too complicated). Editor in the browser on the adapter's own port (8097).
+First use case: solarium cabin (booking at card reader -> light 100 %, solarium on -> dimmed 20 %,
+exit motion then door contact open -> off) - shipped as template `solarium`.
+
+## Layout
+
+- `lib/blocks.js` – block catalog: definition = group/label/symbol, inputs (with `open` value of an
+  unconnected input: AND/NAND 1, OR/NOR 0 like LOGO!), outputs, params, `retain`, `evaluate(ctx)`.
+  Values on wires are numbers (digital 0/1). Timers use `ctx.wake(at)`; one-cycle pulses wake at
+  `now`. Weekly timer parses "Mo-Fr 06:30-22:00; ...". Astro uses `lib/sun.js` (sunrise equation)
+  with the location from `system.config`.
+- `lib/engine.js` – `Engine`: programs `{id, name, enabled, blocks, wires}`; signal-flow order
+  (Kahn), feedback loops repeated until stable (max 10 passes); event driven (input change or
+  wake-up); outputs emitted as 'write' only when the result changes, never at start/reload;
+  `retained()` for remanent blocks (RS, toggle, counter, hours unless param retain = false).
+- `lib/store.js` – programs.json / retain.json in the instance data dir (atomic write), `_clean()`
+  validates editor input; templates start disabled.
+- `lib/server.js` – editor files (www/), REST API (`/api/catalog`, `/api/programs`, `/api/states`),
+  `/ws` live snapshots (throttled 300 ms). Optional access key for API/WS.
+- `www/` – vanilla JS SVG editor: palette, drag/drop, wiring by dragging between ports, params panel
+  with state search (datalist), program tabs, fit view, live colouring and remaining times.
+- `main.js` – subscribes the input data points (foreign), presets values, writes outputs
+  (`setForeignState` ack=false; type from the object or the output's mode), saves remanent values
+  every 30 s and on unload.
+- `test/` – engine/blocks with a fake clock (incl. the solarium scenario), adapter with a fake
+  ioBroker + real HTTP/WS. The editor was checked with Playwright (scratchpad, not in npm test).
+
+## Conventions
+
+- UI texts and README in German, code and comments in English.
+- Bump `version` in both `package.json` and `io-package.json` and add a `news` entry.
+- Install on the ioBroker host: `iobroker url https://github.com/andreaslampl/ioBroker.logik`.
+- Run `npm test` before committing.
+- Don't call it "LOGO" in names (Siemens trademark); "wie eine Kleinsteuerung" is fine.

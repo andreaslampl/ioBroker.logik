@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logik</title>
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<header id="top">
+  <div id="tabs"></div>
+  <button id="newProg" type="button" title="Neues Programm">＋ Neu</button>
+  <button id="fromTemplate" type="button" title="Beispiel einfügen">Beispiel</button>
+  <span class="grow"></span>
+  <label class="switch" title="Programm läuft"><input id="enabled" type="checkbox"> aktiv</label>
+  <button id="fitView" type="button" title="Ganzes Programm anzeigen">⤢ Alles</button>
+  <label class="switch" title="Werte live anzeigen"><input id="live" type="checkbox" checked> Live</label>
+  <button id="rename" type="button">Umbenennen</button>
+  <button id="delete" type="button">Löschen</button>
+  <button id="save" type="button" class="primary">Speichern</button>
+</header>
+<div id="main">
+  <aside id="palette"></aside>
+  <div id="canvasWrap">
+    <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" class="gridline"/>
+        </pattern>
+      </defs>
+      <g id="viewport">
+        <rect id="bg" x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)"/>
+        <g id="wires"></g>
+        <g id="blocks"></g>
+        <path id="drag" class="wire dragging" d=""/>
+      </g>
+    </svg>
+    <div id="hint">Baustein links anklicken oder auf die Fläche ziehen · Ausgang (rechts) mit Eingang (links) verbinden · Entf löscht · Mausrad zoomt · Fläche ziehen verschiebt</div>
+  </div>
+  <aside id="props"><p class="muted">Baustein anklicken, um ihn einzustellen.</p></aside>
+</div>
+<div id="msg"></div>
+<datalist id="stateList"></datalist>
+<script src="editor.js"></script>
+</body>
+</html>

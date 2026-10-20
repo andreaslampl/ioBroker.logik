@@ -1,0 +1,8 @@
+{
+  "The programs are drawn in the editor: open it with the instance link (globe icon) or the address in info.editorUrl, e.g. http://<ioBroker-IP>:8097/": "Die Programme werden im Editor gezeichnet: öffnen über den Link der Instanz (Weltkugel-Symbol) oder die Adresse in info.editorUrl, z. B. http://<ioBroker-IP>:8097/",
+  "Editor port": "Port des Editors",
+  "Address of the ioBroker server for the link (optional)": "Adresse des ioBroker-Servers für den Link (optional)",
+  "Empty = detected automatically": "Leer = automatisch erkannt",
+  "Access key (optional)": "Zugriffsschlüssel (optional)",
+  "If set, the editor must be opened with ?key=... (anybody who can open the editor can switch data points)": "Wenn gesetzt, muss der Editor mit ?key=... geöffnet werden (wer den Editor öffnen kann, kann Datenpunkte schalten)"
+}

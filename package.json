@@ -1,0 +1,16 @@
+{
+  "name": "iobroker.logik",
+  "version": "0.1.0",
+  "description": "Graphical logic with function blocks (like a small PLC) for ioBroker",
+  "author": "andreaslampl",
+  "license": "MIT",
+  "homepage": "https://github.com/andreaslampl/ioBroker.logik",
+  "repository": { "type": "git", "url": "https://github.com/andreaslampl/ioBroker.logik.git" },
+  "bugs": { "url": "https://github.com/andreaslampl/ioBroker.logik/issues" },
+  "keywords": ["ioBroker", "Logik", "Logic", "Funktionsbausteine", "FUP", "SPS"],
+  "main": "main.js",
+  "files": ["admin/", "lib/", "www/", "main.js", "io-package.json", "LICENSE", "README.md"],
+  "engines": { "node": ">=18" },
+  "dependencies": { "@iobroker/adapter-core": "^3.2.3", "ws": "^8.18.0" },
+  "scripts": { "test": "node --test --test-timeout=60000 test/*.test.js" }
+}

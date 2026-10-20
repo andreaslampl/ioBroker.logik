@@ -1,0 +1,119 @@
+{
+  "common": {
+    "name": "logik",
+    "version": "0.1.0",
+    "news": {
+      "0.1.0": {
+        "en": "Initial release: graphical function block logic (like a small PLC) with editor in the browser",
+        "de": "Erste Version: grafische Logik mit Funktionsbausteinen (wie eine Kleinsteuerung) mit Editor im Browser"
+      }
+    },
+    "titleLang": {
+      "en": "Logic (function blocks)",
+      "de": "Logik (Funktionsbausteine)"
+    },
+    "desc": {
+      "en": "Graphical logic like a small PLC: drag function blocks (AND, OR, timers, memory, counters, analog, time switches, astro clock) onto a canvas, wire them and connect inputs/outputs to ioBroker states.",
+      "de": "Grafische Logik wie bei einer Kleinsteuerung: Funktionsbausteine (UND, ODER, Zeiten, Speicher, Zähler, Analog, Schaltuhren, Astro-Uhr) auf eine Fläche ziehen, verbinden und Ein-/Ausgänge mit ioBroker-Datenpunkten verknüpfen."
+    },
+    "authors": [
+      "andreaslampl"
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "mode": "daemon",
+    "icon": "logik.png",
+    "extIcon": "https://raw.githubusercontent.com/andreaslampl/ioBroker.logik/main/admin/logik.png",
+    "readme": "https://github.com/andreaslampl/ioBroker.logik/blob/main/README.md",
+    "enabled": true,
+    "type": "logic",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "push",
+    "adminUI": {
+      "config": "json"
+    },
+    "localLinks": {
+      "_default": {
+        "link": "http://%ip%:%port%/",
+        "pro": false
+      }
+    },
+    "tier": 2,
+    "dependencies": [
+      {
+        "js-controller": ">=5.0.19"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=6.0.0"
+      }
+    ]
+  },
+  "native": {
+    "port": 8097,
+    "publicHost": "",
+    "accessKey": ""
+  },
+  "protectedNative": [
+    "accessKey"
+  ],
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "name": {
+          "en": "Editor running",
+          "de": "Editor läuft"
+        },
+        "type": "boolean",
+        "role": "indicator.connected",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.editorUrl",
+      "type": "state",
+      "common": {
+        "name": {
+          "en": "Editor URL",
+          "de": "Adresse des Editors"
+        },
+        "type": "string",
+        "role": "url",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.programs",
+      "type": "state",
+      "common": {
+        "name": {
+          "en": "Active programs",
+          "de": "Aktive Programme"
+        },
+        "type": "number",
+        "role": "value",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    }
+  ]
+}
