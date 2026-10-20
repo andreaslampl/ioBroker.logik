@@ -109,6 +109,10 @@ class Logik extends utils.Adapter {
         const active = programs.filter(p => p.enabled !== false).length;
         this.log.info(`${programs.length} program(s), ${active} active, ${inputs.length} input(s), ${outputs.length} output(s)`);
         await this.setState('info.programs', active, true);
+        // the editor may have asked for live values while the data points were still being read
+        if (this.server) {
+            this.server.stateChanged();
+        }
     }
 
     async typeOf(id, isOutput = true) {

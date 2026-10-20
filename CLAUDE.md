@@ -29,6 +29,9 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
 - Live view of I/O blocks (0.3.0, owner wants to see that signals really arrive): main.js also
   subscribes outputs and keeps `{val, ack, ts}` per data point (`stateInfo`); live messages carry
   `states` + `now` (clock offset for "vor 5 s"); output line soll/ist with ✓ (ack) ⏳ (sent) ≠ (differs).
+  0.3.1 field: owner saw "kein Wert in ioBroker" for a valid data point - it was chosen but not saved
+  (or the push came before reload had read the values). Unsaved ids now via `POST /api/values`
+  ("Speichern für Live"), reload ends with `server.stateChanged()`.
 - `main.js` – subscribes the input data points (foreign), presets values, writes outputs
   (`setForeignState` ack=false; type from the object or the output's mode), saves remanent values
   every 30 s and on unload.

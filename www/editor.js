@@ -256,13 +256,41 @@ function num(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
+// values of data points the running program does not use yet (chosen but not saved)
+const unsaved = {};
+let unsavedTimer = null;
+function fetchUnsaved(id) {
+  if (!unsaved[id]) unsaved[id] = { at: 0 };
+  if (Date.now() - unsaved[id].at < 3000 || unsavedTimer) return;
+  unsavedTimer = setTimeout(async () => {
+    unsavedTimer = null;
+    const ids = Object.keys(unsaved).filter(k => Date.now() - unsaved[k].at >= 3000);
+    for (const k of ids) unsaved[k].at = Date.now();
+    try {
+      const vals = await api('values', { method: 'POST', body: JSON.stringify(ids) });
+      for (const k of ids) unsaved[k].val = vals[k];
+      applyIoLive($('live').checked && live && prog && live.program === prog.id ? live.blocks : null);
+    } catch (e) {
+      // ignore
+    }
+  }, 100);
+}
+
 /** What the live line of an input/output shows: {text, on, cls, st} or null when live is off. */
 function ioInfo(b, on) {
   if (!on || !b || !b.params.state) return null;
   const st = live.states ? live.states[b.params.state] : undefined;
+  if (st === undefined) {
+    // not part of the saved program: show the value, live updates start after saving
+    fetchUnsaved(b.params.state);
+    const u = unsaved[b.params.state];
+    const has = u && 'val' in u;
+    return { text: (has ? fmtVal(u.val) + ' · ' : '') + 'Speichern für Live', on: has && b.type === 'input' && Boolean(num(u.val)), cls: 'wait', st: null };
+  }
   const block = on[b.id] || {};
   if (b.type === 'input') {
-    const q = block.out ? block.out.Q : 0;
+    // an inactive program does not evaluate: then the lamp follows the data point directly
+    const q = live.enabled !== false && block.out ? block.out.Q : st ? (b.params.invert ? !num(st.val) : num(st.val)) : 0;
     if (!st) return { text: '⚠ kein Wert in ioBroker', on: false, cls: 'warn', st };
     return { text: fmtVal(st.val, st.unit) + (st.ts ? ' · ' + ago(st.ts) : ''), on: Boolean(q), cls: '', st };
   }

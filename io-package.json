@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "news": {
+      "0.3.1": {
+        "en": "Live view: values of data points chosen but not yet saved are shown; no more 'kein Wert' right after saving; lamp of an input follows the data point while the program is inactive",
+        "de": "Live-Anzeige: Wert von gewählten, noch nicht gespeicherten Datenpunkten wird angezeigt; kein falsches 'kein Wert' mehr direkt nach dem Speichern; Lampe eines Eingangs folgt bei inaktivem Programm dem Datenpunkt"
+      },
       "0.3.0": {
         "en": "Live view in input/output blocks: lamp, value as ioBroker has it, time of the last update, outputs show target/actual value and whether the device confirmed it",
         "de": "Live-Anzeige in Ein-/Ausgängen: Lampe, Wert wie in ioBroker, Zeit der letzten Aktualisierung, Ausgänge zeigen Soll/Ist und ob das Gerät bestätigt hat"
