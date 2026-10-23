@@ -4,6 +4,14 @@ Grafische Logik für ioBroker - wie bei einer Kleinsteuerung (z. B. Siemens LOGO
 eine Fläche ziehen, mit der Maus verbinden, Ein- und Ausgänge mit ioBroker-Datenpunkten verknüpfen.
 Für Abläufe, die in Blockly unübersichtlich werden.
 
+## Mitteilung (Push) über SmartView
+
+Baustein **„Mitteilung (Push)“** (Gruppe Ein-/Ausgänge): Titel und Text eintragen, Eingang verdrahten. Wird
+der Eingang **Ein**, schickt SmartView die Mitteilung – als App-Push und, wenn dort eingerichtet, über
+Telegram und WhatsApp. Beispiel „Fenster länger als 15 Minuten offen und Heizung an“:
+Eingang Fenster + Eingang Heizung → **UND** → **Einschaltverzögerung** 900 s → **Mitteilung**.
+Datenpunkt ist `smartview.0.push.message` (bei einer anderen SmartView-Instanz anpassen).
+
 ## Installation
 
 ```

@@ -177,3 +177,25 @@ test('example: solarium cabin (booking -> light, solarium -> dimmed, leaving -> 
     e.set('demo.booked', true); // next guest
     assert.equal(light(), 100);
 });
+
+test('message block: sends when the input becomes 1 (window open longer than 15 min), not at start', t => {
+    const e = setup(
+        {
+            blocks: [io('win', 'knx.0.Fenster'), { id: 'dly', type: 'ondelay', params: { T: 900 } }, { id: 'msg', type: 'notify', params: { title: 'Fenster', text: 'Bad seit 15 min offen' } }],
+            wires: [w('win', 'dly', 'Q', 'Trg'), w('dly', 'msg')],
+        },
+        { values: { 'knx.0.Fenster': 1 } },
+    );
+    t.after(e.stop);
+    const sent = [];
+    e.engine.on('notify', (target, msg) => sent.push([target, msg]));
+    // already open at start: the delay runs, a message comes after 15 min (that is a change after the start)
+    e.set('knx.0.Fenster', 0);
+    e.set('knx.0.Fenster', 1);
+    e.advance(600);
+    assert.equal(sent.length, 0);
+    e.advance(301);
+    assert.deepEqual(sent, [['smartview.0.push.message', { title: 'Fenster', text: 'Bad seit 15 min offen' }]]);
+    e.advance(600);
+    assert.equal(sent.length, 1, 'once, not again while it stays open');
+});

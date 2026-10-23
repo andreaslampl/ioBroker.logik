@@ -45,6 +45,7 @@ class Logik extends utils.Adapter {
         }
         this.engine = new Engine({ log: this.log, location });
         this.engine.on('write', (id, value, mode) => this.writeOutput(id, value, mode).catch(err => this.log.warn(`Output ${id}: ${err.message}`)));
+        this.engine.on('notify', (target, msg) => this.notify(target, msg).catch(err => this.log.warn(`Message ${target}: ${err.message}`)));
         this.store = new Store(this.dataDir || utils.getAbsoluteInstanceDataDir(this), () => this.reload().catch(err => this.log.warn(err.message)));
         await this.reload(this.store.readRetain());
 
@@ -131,6 +132,15 @@ class Logik extends utils.Adapter {
     stateInfo(id) {
         const st = this.liveStates.get(id);
         return st ? { ...st, unit: this.units.get(id) || '' } : null;
+    }
+
+    /** Message block: SmartView sends what is written to its push.message data point (JSON title/text). */
+    async notify(target, msg) {
+        if (!/^smartview\.\d+\.push\.message$/.test(target)) {
+            throw new Error('only smartview.N.push.message');
+        }
+        this.log.info(`Message: ${msg.title} - ${msg.text}`);
+        await this.setForeignStateAsync(target, JSON.stringify({ title: msg.title, text: msg.text }), false);
     }
 
     async writeOutput(id, value, mode) {

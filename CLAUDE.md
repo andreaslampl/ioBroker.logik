@@ -38,6 +38,10 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
 - `test/` – engine/blocks with a fake clock (incl. the solarium scenario), adapter with a fake
   ioBroker + real HTTP/WS. The editor was checked with Playwright (scratchpad, not in npm test).
 
+- 0.4.0: owner wanted push rules with logic -> block `notify` (title, text, target smartview.N.push.message):
+  engine emits 'notify' when its input becomes 1 (not at start, like outputs); main writes JSON {title, text}
+  to the target (only smartview.N.push.message allowed). SmartView sends it to app/Telegram/WhatsApp.
+
 ## Conventions
 
 - UI texts and README in German, code and comments in English.
