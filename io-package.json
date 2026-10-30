@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "news": {
+      "0.6.2": {
+        "en": "Room controller: the humidity lock for cooling is optional and off by default (the heat pump has its own)",
+        "de": "Raumregler: Feuchte-Sperre beim Kühlen ist optional und standardmäßig aus (die Wärmepumpe hat eine eigene)"
+      },
       "0.6.1": {
         "en": "Room controller: cooling with the same valves (floor cooling) - own dead band above the set point, restart of the I part when switching heat/cool, cooling locked above a humidity (condensation); example with heat/cool and humidity inputs",
         "de": "Raumregler: Kühlen mit denselben Stellantrieben (Fußbodenkühlung) – Totzone über dem Sollwert, I-Anteil startet beim Umschalten Heizen/Kühlen neu, Kühlen gesperrt über einer Luftfeuchte (Kondenswasser); Beispiel mit Eingängen Heizen/Kühlen und Luftfeuchte"

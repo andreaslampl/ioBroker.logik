@@ -62,7 +62,7 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
 - 0.6.1: owner cools via the floor heating with the heat pump, same valves, heat/cool switch -> pi `coolOffset` (dead band,
   default 2 K, cooling target = soll + offset, modes shift upwards), I reset when Cool changes (`s.cool`), input RH +
   `rhMax` (default 65 %, 0 = off) -> 0 % while too humid; template inputs heat/cool (inverted: KNX DPT 1.100 1 = heating)
-  and humidity.
+  and humidity. 0.6.2: owner's heat pump has its own humidity lock -> `rhMax` default 0 (off), RH not in the template.
 
 ## Conventions
 
