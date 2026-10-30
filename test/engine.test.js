@@ -329,3 +329,33 @@ test('room controller (PI): no valid temperature keeps the last position', t => 
     e.advance(120);
     assert.equal(e.out('pi', 'Y'), y);
 });
+
+test('room controller (PI): floor cooling with the same valves - dead band, switch over, humidity lock', t => {
+    const e = setup({
+        blocks: [io('ist', 'x.ist'), io('soll', 'x.soll'), { id: 'hc', type: 'input', params: { state: 'x.heatcool', invert: true } }, io('rh', 'x.rh'),
+            { id: 'pi', type: 'pi', params: { Xp: 5, Tn: 240, coolOffset: 2, rhMax: 65, every: 60 } }],
+        // KNX DPT 1.100: 1 = heating, 0 = cooling -> inverted to the Cool input
+        wires: [w('ist', 'pi', 'Q', 'Ist'), w('soll', 'pi', 'Q', 'Soll'), w('hc', 'pi', 'Q', 'Cool'), w('rh', 'pi', 'Q', 'RH')],
+    }, { values: { 'x.ist': 23, 'x.soll': 22, 'x.heatcool': 1, 'x.rh': 50 } });
+    t.after(e.stop);
+    e.advance(60);
+    assert.equal(e.out('pi', 'Y'), 0, 'heating: 23 °C is warm enough');
+    e.set('x.heatcool', 0); // summer: cooling
+    e.advance(60);
+    assert.equal(e.out('pi', 'S'), 24, 'cooling set point = 22 + 2');
+    assert.equal(e.out('pi', 'Y'), 0, 'in the dead band: no cooling');
+    e.set('x.ist', 25);
+    e.advance(60);
+    assert.ok(e.out('pi', 'Y') >= 20, `1 K too warm: cools (${e.out('pi', 'Y')})`);
+    e.set('x.rh', 70);
+    e.advance(60);
+    assert.equal(e.out('pi', 'Y'), 0, 'too humid: cooling locked (condensation)');
+    e.set('x.rh', 55);
+    e.advance(60);
+    assert.ok(e.out('pi', 'Y') > 0);
+    // back to heating: the cooling I part does not carry over
+    e.set('x.heatcool', 1);
+    e.set('x.ist', 22);
+    e.advance(60);
+    assert.equal(e.out('pi', 'Y'), 0);
+});

@@ -72,7 +72,13 @@ Datenpunkt ist `smartview.0.push.message` (bei einer anderen SmartView-Instanz a
 an den Heizungsaktor – so, wie es ein HomeServer oder KNX-Raumregler macht.
 
 - **Eingänge:** Ist, Soll, **En** (Freigabe Heizung; nicht verbunden = immer frei), **Win** (Fenster offen → 0 %),
-  **M** (Betriebsart KNX: 1 Komfort, 2 Standby, 3 Nacht, 4 Frostschutz; nicht verbunden = Komfort), **Cool** (1 = Kühlen).
+  **M** (Betriebsart KNX: 1 Komfort, 2 Standby, 3 Nacht, 4 Frostschutz; nicht verbunden = Komfort), **Cool** (1 = Kühlen),
+  **RH** (Luftfeuchte %, für die Kühlsperre).
+- **Kühlen über die Fußbodenheizung** (dieselben Stellantriebe): Umschaltung Heizen/Kühlen auf **Cool**. Achtung: KNX
+  DPT 1.100 meldet **1 = Heizen, 0 = Kühlen** – am Eingang „Invertieren“ anhaken (in der Vorlage schon so). Gekühlt wird
+  erst über **Soll + 2 K** (Totzone, einstellbar), beim Umschalten startet der I-Anteil neu, und über **65 %
+  Luftfeuchte** wird nicht gekühlt (Kondenswasser am Boden). Die Wärmepumpe begrenzt zusätzlich ihre Vorlauftemperatur
+  beim Kühlen – dort muss die Taupunkt-Grenze trotzdem eingestellt sein.
 - **Ausgänge:** **Y** Stellgröße 0–100 %, **H** heizt (1 = Y > 0), **S** wirksamer Sollwert (nach Betriebsart).
 - **Einstellwerte:** Proportionalbereich und Nachstellzeit wie bei KNX: Heizkörper 5 K / 150 min,
   **Fußbodenheizung 5 K / 240 min**, Elektroheizung 4 K / 100 min. Absenkung Standby 2 K, Nacht 4 K, Frostschutz 7 °C.

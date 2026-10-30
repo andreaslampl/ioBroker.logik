@@ -59,6 +59,11 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
   Output block param `cyclic` (min): engine writes again after that time (`writtenAt`, wake). Template `room`, editor
   example 3. Engine tests with fake clock. Not yet on the owner's KNX.
 
+- 0.6.1: owner cools via the floor heating with the heat pump, same valves, heat/cool switch -> pi `coolOffset` (dead band,
+  default 2 K, cooling target = soll + offset, modes shift upwards), I reset when Cool changes (`s.cool`), input RH +
+  `rhMax` (default 65 %, 0 = off) -> 0 % while too humid; template inputs heat/cool (inverted: KNX DPT 1.100 1 = heating)
+  and humidity.
+
 ## Conventions
 
 - UI texts and README in German, code and comments in English.
