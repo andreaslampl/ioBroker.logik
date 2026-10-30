@@ -42,6 +42,12 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
   engine emits 'notify' when its input becomes 1 (not at start, like outputs); main writes JSON {title, text}
   to the target (only smartview.N.push.message allowed). SmartView sends it to app/Telegram/WhatsApp.
 
+- 0.5.0: owner (KNX switch actuators) asked for Halloween horror flickering of outside lights from a motion detector ->
+  block `flicker` (En; T max duration, onMin/onMax, offMin/offMax, min = shortest switching time, default 0.3 s for relays;
+  random times, 15 % long dark pause, 20 % quick double flash; rising edge of En restarts; after T or En off Q = 0;
+  `ctx.random` can be injected), template `halloween` (motion AND switch -> flicker -> bool output), editor
+  "Beispiel einfügen" asks 1 = Solarium / 2 = Halloween. Engine test with fake clock. Not tried on the owner's KNX.
+
 ## Conventions
 
 - UI texts and README in German, code and comments in English.

@@ -49,7 +49,7 @@ geschaltetes Licht wird also nicht überschrieben, nur weil der Adapter neu star
 | --- | --- |
 | Ein-/Ausgänge | Eingang (Datenpunkt, optional invertiert), Ausgang (Ein/Aus oder Zahl), Konstante, Notiz |
 | Grundfunktionen | UND, NAND, ODER, NOR, XOR, NICHT, Flanke steigend, Flanke fallend |
-| Zeiten | Einschalt-, Ausschalt-, Ein-/Ausschaltverzögerung, Wischrelais, flankengetriggerter Impuls, Treppenlichtschalter, Taktgeber |
+| Zeiten | Einschalt-, Ausschalt-, Ein-/Ausschaltverzögerung, Wischrelais, flankengetriggerter Impuls, Treppenlichtschalter, Taktgeber, Flackern (zufällig) |
 | Speicher und Zähler | RS-Speicher, Stromstoßrelais, Vor-/Rückwärtszähler, Betriebsstundenzähler (remanent: bleiben nach Neustart erhalten) |
 | Analog | Schwellwertschalter (Hysterese/Fenster), Analogkomparator, Analog-Auswahl (Multiplexer), Analogverstärker, Rechnen |
 | Zeitschaltuhren | Wochenschaltuhr („Mo-Fr 06:30-22:00; Sa,So 08:00-23:00“), Astro-Uhr Tag/Nacht mit Verschiebung |
@@ -64,6 +64,19 @@ der Eingang **Ein**, schickt SmartView die Mitteilung – als App-Push und, wenn
 Telegram und WhatsApp. Beispiel „Fenster länger als 15 Minuten offen und Heizung an“:
 Eingang Fenster + Eingang Heizung → **UND** → **Einschaltverzögerung** 900 s → **Mitteilung**.
 Datenpunkt ist `smartview.0.push.message` (bei einer anderen SmartView-Instanz anpassen).
+
+## Beispiel: Halloween-Flackern
+
+„Beispiel einfügen“ → **2 = Halloween-Flackern**: Bewegungsmelder **und** Halloween-Schalter → Baustein **„Flackern
+(zufällig)“** → Außenlicht. Das Licht flackert dann 20 Sekunden in zufälligen Abständen (mal kurz, mal ein Doppelblitz,
+mal eine längere dunkle Pause) und ist danach **aus**; jede neue Bewegung startet es wieder.
+
+- Die `demo.*`-Datenpunkte durch die eigenen ersetzen (Bewegungsmelder, ein Schalter z. B. `0_userdata.0.Halloween`
+  oder eine SmartView-Kachel, das Außenlicht) und das Programm aktiv schalten.
+- **KNX-Schaltausgänge (Relais):** die „kürzeste Schaltzeit“ von 0,3 s nicht unterschreiten – das sind höchstens etwa
+  3 Schaltungen pro Sekunde, schont Relais und Bus. Die Dauer begrenzt die Schaltspiele zusätzlich.
+- Hängt am selben Licht noch eine normale Steuerung (Treppenlicht, Dämmerung), beide über ein **ODER** zusammenführen,
+  sonst schreiben zwei Programme gegeneinander.
 
 ## Beispiel: Solarium-Kabine
 

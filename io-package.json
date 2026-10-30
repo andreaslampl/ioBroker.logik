@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "news": {
+      "0.5.0": {
+        "en": "New block 'Flackern (zufällig)': random on / off times like a horror film light, limited duration, shortest switching time to protect relays and the KNX bus; example 'Halloween-Flackern' (motion detector -> outside light)",
+        "de": "Neuer Baustein „Flackern (zufällig)“: zufällige Ein-/Aus-Zeiten wie ein Horrorfilm-Licht, begrenzte Dauer, kürzeste Schaltzeit zum Schutz von Relais und KNX-Bus; Beispiel „Halloween-Flackern“ (Bewegungsmelder → Außenlicht)"
+      },
       "0.4.0": {
         "en": "New block \"Mitteilung (Push)\": sends a message through SmartView (app push, Telegram, WhatsApp) when its input becomes on",
         "de": "Neuer Baustein „Mitteilung (Push)“: schickt eine Mitteilung über SmartView (App-Push, Telegram, WhatsApp), wenn sein Eingang Ein wird"

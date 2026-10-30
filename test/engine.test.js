@@ -199,3 +199,31 @@ test('message block: sends when the input becomes 1 (window open longer than 15 
     e.advance(600);
     assert.equal(sent.length, 1, 'once, not again while it stays open');
 });
+
+test('flicker: random times within the limits, never faster than the shortest switching time, stops after T', t => {
+    const e = setup({
+        blocks: [io('m', 'x.motion'), { id: 'fl', type: 'flicker', params: { T: 20, onMin: 0.3, onMax: 1.2, offMin: 0.3, offMax: 2.5, min: 0.3 } }, outBlock('l', 'x.light', 'bool')],
+        wires: [w('m', 'fl', 'Q', 'En'), w('fl', 'l')],
+    });
+    t.after(e.stop);
+    e.set('x.motion', true);
+    assert.equal(e.out('fl'), 1, 'starts with a flash');
+    const changes = [];
+    let last = 1;
+    for (let i = 0; i < 250; i++) {
+        e.advance(0.1); // 25 s in 100 ms steps
+        if (e.out('fl') !== last) {
+            last = e.out('fl');
+            changes.push(i);
+        }
+    }
+    assert.ok(changes.length >= 10, `flickers (${changes.length} changes)`);
+    const gaps = changes.slice(1).map((c, i) => c - changes[i]);
+    assert.ok(Math.min(...gaps) >= 3, 'at least 0.3 s between two switchings');
+    assert.equal(e.out('fl'), 0, 'off after 20 s although the motion detector is still on');
+    assert.equal(e.last('x.light')[1], 0, 'light off at the end (0 = false for a bool output)');
+    // a new movement starts it again
+    e.set('x.motion', false);
+    e.set('x.motion', true);
+    assert.equal(e.out('fl'), 1);
+});

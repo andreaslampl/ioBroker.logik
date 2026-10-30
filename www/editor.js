@@ -727,7 +727,10 @@ $('newProg').onclick = async () => {
 $('fromTemplate').onclick = async () => {
   if (dirty && !confirm('Änderungen am aktuellen Programm verwerfen?')) return;
   dirty = false;
-  const p = await api('programs?template=solarium', { method: 'POST', body: '{}' });
+  const pick = prompt('Welches Beispiel?\n1 = Solarium-Kabine\n2 = Halloween-Flackern (Bewegungsmelder → Außenlicht)', '2');
+  const template = { 1: 'solarium', 2: 'halloween' }[String(pick || '').trim()];
+  if (!template) return;
+  const p = await api('programs?template=' + template, { method: 'POST', body: '{}' });
   await loadPrograms(p.id);
   show('Beispiel eingefügt – Datenpunkte (demo.*) durch die eigenen ersetzen und aktiv schalten.');
 };
