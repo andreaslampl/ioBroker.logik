@@ -260,3 +260,72 @@ test('flicker: R stops at once, T = 0 runs as long as En is on', t => {
     e.set('x.r', true);
     assert.equal(e.out('fl'), 0, 'R stops at once');
 });
+
+test('room controller (PI): heats when too cold, settles, window / release off, modes, anti-windup, cyclic sending', t => {
+    const e = setup({
+        blocks: [io('ist', 'x.ist'), io('soll', 'x.soll'), io('win', 'x.win'), io('en', 'x.en'), io('m', 'x.mode'),
+            { id: 'pi', type: 'pi', params: { Xp: 5, Tn: 150, standby: 2, night: 4, frost: 7, every: 60 } }, outBlock('v', 'x.valve', 'number')],
+        wires: [w('ist', 'pi', 'Q', 'Ist'), w('soll', 'pi', 'Q', 'Soll'), w('win', 'pi', 'Q', 'Win'), w('en', 'pi', 'Q', 'En'), w('m', 'pi', 'Q', 'M'), w('pi', 'v', 'Y', 'I')],
+    }, { values: { 'x.ist': 20, 'x.soll': 21, 'x.en': 1, 'x.mode': 1 } });
+    t.after(e.stop);
+    e.engine.programs.get('p').blocks.get('v').params.cyclic = 10;
+    e.advance(60);
+    assert.equal(e.out('pi', 'Y'), 20 + Math.round(20 / 150 * 1), '1 K too cold: P = 20 % plus a little I');
+    assert.equal(e.out('pi', 'S'), 21);
+    // stays too cold for 2 h: the I part grows
+    for (let i = 0; i < 120; i++) e.advance(60);
+    assert.ok(e.out('pi', 'Y') > 30, `integral grows (${e.out('pi', 'Y')})`);
+    // warm enough: P goes to 0, I keeps a part (like a real controller)
+    e.set('x.ist', 21);
+    e.advance(60);
+    const settled = e.out('pi', 'Y');
+    assert.ok(settled > 0 && settled < 30, `holds a base load (${settled})`);
+    // too warm: goes down, never below 0
+    e.set('x.ist', 25);
+    for (let i = 0; i < 30; i++) e.advance(60);
+    assert.equal(e.out('pi', 'Y'), 0);
+    // window open -> 0, release off -> 0
+    e.set('x.ist', 18);
+    e.advance(60);
+    assert.ok(e.out('pi', 'Y') > 0);
+    e.set('x.win', 1);
+    assert.equal(e.out('pi', 'Y'), 0);
+    e.set('x.win', 0);
+    e.set('x.en', 0);
+    assert.equal(e.out('pi', 'Y'), 0);
+    e.set('x.en', 1);
+    // night mode lowers the set point by 4 K, frost protection 7 °C
+    e.set('x.mode', 3);
+    assert.equal(e.out('pi', 'S'), 17);
+    e.set('x.mode', 4);
+    assert.equal(e.out('pi', 'S'), 7);
+    // anti-windup: very cold for hours stays at 100 % and comes down quickly afterwards
+    e.set('x.mode', 1);
+    e.set('x.ist', 10);
+    for (let i = 0; i < 300; i++) e.advance(60);
+    assert.equal(e.out('pi', 'Y'), 100);
+    e.set('x.ist', 21.5);
+    e.advance(60);
+    assert.ok(e.out('pi', 'Y') < 100, 'not stuck at 100 % after a long cold phase');
+    // the valve output is sent again after 10 min although nothing changed
+    const n = e.writes.filter(x => x[0] === 'x.valve').length;
+    e.set('x.ist', 30); // -> 0 % and stays
+    for (let i = 0; i < 35; i++) e.advance(60);
+    const valveWrites = e.writes.filter(x => x[0] === 'x.valve').slice(n);
+    assert.ok(valveWrites.length >= 3, `cyclic every 10 min (${valveWrites.length} writes in 35 min)`);
+    assert.deepEqual(valveWrites.slice(-2).map(x => x[1]), [0, 0], 'the same value again');
+});
+
+test('room controller (PI): no valid temperature keeps the last position', t => {
+    const e = setup({
+        blocks: [io('ist', 'x.ist'), io('soll', 'x.soll'), { id: 'pi', type: 'pi', params: { Xp: 5, Tn: 150, every: 60 } }],
+        wires: [w('ist', 'pi', 'Q', 'Ist'), w('soll', 'pi', 'Q', 'Soll')],
+    }, { values: { 'x.ist': 19, 'x.soll': 21 } });
+    t.after(e.stop);
+    e.advance(60);
+    const y = e.out('pi', 'Y');
+    assert.ok(y > 0);
+    e.set('x.ist', 0); // sensor lost (0 = no value)
+    e.advance(120);
+    assert.equal(e.out('pi', 'Y'), y);
+});

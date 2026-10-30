@@ -727,8 +727,8 @@ $('newProg').onclick = async () => {
 $('fromTemplate').onclick = async () => {
   if (dirty && !confirm('Änderungen am aktuellen Programm verwerfen?')) return;
   dirty = false;
-  const pick = prompt('Welches Beispiel?\n1 = Solarium-Kabine\n2 = Halloween-Flackern (Bewegungsmelder → Außenlicht)', '2');
-  const template = { 1: 'solarium', 2: 'halloween' }[String(pick || '').trim()];
+  const pick = prompt('Welches Beispiel?\n1 = Solarium-Kabine\n2 = Halloween-Flackern (Bewegungsmelder → Außenlicht)\n3 = Einzelraumregelung (Raumregler PI → Stellgröße)', '3');
+  const template = { 1: 'solarium', 2: 'halloween', 3: 'room' }[String(pick || '').trim()];
   if (!template) return;
   const p = await api('programs?template=' + template, { method: 'POST', body: '{}' });
   await loadPrograms(p.id);

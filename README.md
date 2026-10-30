@@ -49,6 +49,7 @@ geschaltetes Licht wird also nicht überschrieben, nur weil der Adapter neu star
 | --- | --- |
 | Ein-/Ausgänge | Eingang (Datenpunkt, optional invertiert), Ausgang (Ein/Aus oder Zahl), Konstante, Notiz |
 | Grundfunktionen | UND, NAND, ODER, NOR, XOR, NICHT, Flanke steigend, Flanke fallend |
+| Heizung | Raumregler (PI) |
 | Zeiten | Einschalt-, Ausschalt-, Ein-/Ausschaltverzögerung, Wischrelais, flankengetriggerter Impuls, Treppenlichtschalter, Taktgeber, Flackern (zufällig) |
 | Speicher und Zähler | RS-Speicher, Stromstoßrelais, Vor-/Rückwärtszähler, Betriebsstundenzähler (remanent: bleiben nach Neustart erhalten) |
 | Analog | Schwellwertschalter (Hysterese/Fenster), Analogkomparator, Analog-Auswahl (Multiplexer), Analogverstärker, Rechnen |
@@ -64,6 +65,23 @@ der Eingang **Ein**, schickt SmartView die Mitteilung – als App-Push und, wenn
 Telegram und WhatsApp. Beispiel „Fenster länger als 15 Minuten offen und Heizung an“:
 Eingang Fenster + Eingang Heizung → **UND** → **Einschaltverzögerung** 900 s → **Mitteilung**.
 Datenpunkt ist `smartview.0.push.message` (bei einer anderen SmartView-Instanz anpassen).
+
+## Beispiel: Einzelraumregelung (statt Gira HomeServer)
+
+„Beispiel einfügen“ → **3 = Einzelraumregelung**: Ist-Temperatur + Sollwert → **Raumregler (PI)** → Stellgröße in %
+an den Heizungsaktor – so, wie es ein HomeServer oder KNX-Raumregler macht.
+
+- **Eingänge:** Ist, Soll, **En** (Freigabe Heizung; nicht verbunden = immer frei), **Win** (Fenster offen → 0 %),
+  **M** (Betriebsart KNX: 1 Komfort, 2 Standby, 3 Nacht, 4 Frostschutz; nicht verbunden = Komfort), **Cool** (1 = Kühlen).
+- **Ausgänge:** **Y** Stellgröße 0–100 %, **H** heizt (1 = Y > 0), **S** wirksamer Sollwert (nach Betriebsart).
+- **Einstellwerte:** Proportionalbereich und Nachstellzeit wie bei KNX: Heizkörper 5 K / 150 min,
+  **Fußbodenheizung 5 K / 240 min**, Elektroheizung 4 K / 100 min. Absenkung Standby 2 K, Nacht 4 K, Frostschutz 7 °C.
+- Der Regler rechnet einmal pro Minute, merkt sich seinen Stand über Neustarts und läuft nicht „in die Grenze“
+  (Anti-Windup). Fehlt die Ist-Temperatur (Fühler weg), bleibt die letzte Stellung.
+- Am **Ausgang** „Zusätzlich zyklisch senden alle 10 min“: viele Heizungsaktoren überwachen die Stellgröße und gehen
+  ohne regelmäßiges Telegramm in die Notstellung.
+- Pro Raum einen Regler: die Bausteine kopieren oder mehrere Programme anlegen. Die SmartView-Heizungskachel bleibt das
+  Bedienteil (Sollwert, Betriebsart, Anzeige der Stellgröße).
 
 ## Beispiel: Halloween-Flackern
 

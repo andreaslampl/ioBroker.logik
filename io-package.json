@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "news": {
+      "0.6.0": {
+        "en": "New block 'Raumregler (PI)' (actual + set temperature -> valve position %, HVAC modes, window, release, cooling, anti-windup, kept across restarts), example 'Einzelraumregelung'; outputs can additionally be sent cyclically (valve actuators with monitoring)",
+        "de": "Neuer Baustein „Raumregler (PI)“ (Ist + Soll → Stellgröße %, Betriebsarten, Fenster, Freigabe, Kühlen, Anti-Windup, bleibt über Neustarts erhalten), Beispiel „Einzelraumregelung“; Ausgänge können zusätzlich zyklisch senden (Stellantriebe mit Überwachung)"
+      },
       "0.5.1": {
         "en": "Flicker block: a movement starts the whole duration (also when the motion detector drops earlier), new input R stops at once, the last switching also respects the shortest switching time",
         "de": "Flacker-Baustein: eine Bewegung startet die ganze Dauer (auch wenn der Bewegungsmelder früher abfällt), neuer Eingang R stoppt sofort, auch das letzte Schalten hält die kürzeste Schaltzeit ein"

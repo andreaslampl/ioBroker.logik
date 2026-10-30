@@ -51,6 +51,14 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
   `ctx.random` can be injected), template `halloween` (motion AND switch -> flicker -> bool output), editor
   "Beispiel einfügen" asks 1 = Solarium / 2 = Halloween. Engine test with fake clock. Not tried on the owner's KNX.
 
+- 0.6.0: owner wants to switch off the Gira HomeServer, which did the room heating control (GAs Istwert 1/1/x, Sollwert
+  1/0/x -> Stellgröße 1/3/x DPT 5.001) -> block `pi` (group Heizung): inputs Ist, Soll, En (open 1), Win, M (HVAC 1-4,
+  open 1), Cool; outputs Y (0-100 %), H, S (effective set point); params Xp (K), Tn (min), standby/night offsets, frost,
+  every (s, default 60); position form P + I, conditional integration (anti-windup), I clamped 0-100, retain; En off ->
+  I reset; window -> 0 % with I kept; invalid temps (ist outside 1-60, soll outside 5-35; missing inputs read 0) -> last Y.
+  Output block param `cyclic` (min): engine writes again after that time (`writtenAt`, wake). Template `room`, editor
+  example 3. Engine tests with fake clock. Not yet on the owner's KNX.
+
 ## Conventions
 
 - UI texts and README in German, code and comments in English.
