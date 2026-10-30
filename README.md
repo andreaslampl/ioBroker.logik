@@ -69,7 +69,8 @@ Datenpunkt ist `smartview.0.push.message` (bei einer anderen SmartView-Instanz a
 
 „Beispiel einfügen“ → **2 = Halloween-Flackern**: Bewegungsmelder **und** Halloween-Schalter → Baustein **„Flackern
 (zufällig)“** → Außenlicht. Das Licht flackert dann 20 Sekunden in zufälligen Abständen (mal kurz, mal ein Doppelblitz,
-mal eine längere dunkle Pause) und ist danach **aus**; jede neue Bewegung startet es wieder.
+mal eine längere dunkle Pause) und ist danach **aus** – auch wenn der Bewegungsmelder schon vorher wieder abfällt;
+jede neue Bewegung startet die 20 s neu. Der Eingang **R** des Bausteins stoppt sofort (z. B. ein Aus-Taster).
 
 - Die `demo.*`-Datenpunkte durch die eigenen ersetzen (Bewegungsmelder, ein Schalter z. B. `0_userdata.0.Halloween`
   oder eine SmartView-Kachel, das Außenlicht) und das Programm aktiv schalten.

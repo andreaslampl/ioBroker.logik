@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "news": {
+      "0.5.1": {
+        "en": "Flicker block: a movement starts the whole duration (also when the motion detector drops earlier), new input R stops at once, the last switching also respects the shortest switching time",
+        "de": "Flacker-Baustein: eine Bewegung startet die ganze Dauer (auch wenn der Bewegungsmelder früher abfällt), neuer Eingang R stoppt sofort, auch das letzte Schalten hält die kürzeste Schaltzeit ein"
+      },
       "0.5.0": {
         "en": "New block 'Flackern (zufällig)': random on / off times like a horror film light, limited duration, shortest switching time to protect relays and the KNX bus; example 'Halloween-Flackern' (motion detector -> outside light)",
         "de": "Neuer Baustein „Flackern (zufällig)“: zufällige Ein-/Aus-Zeiten wie ein Horrorfilm-Licht, begrenzte Dauer, kürzeste Schaltzeit zum Schutz von Relais und KNX-Bus; Beispiel „Halloween-Flackern“ (Bewegungsmelder → Außenlicht)"

@@ -44,7 +44,10 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
 
 - 0.5.0: owner (KNX switch actuators) asked for Halloween horror flickering of outside lights from a motion detector ->
   block `flicker` (En; T max duration, onMin/onMax, offMin/offMax, min = shortest switching time, default 0.3 s for relays;
-  random times, 15 % long dark pause, 20 % quick double flash; rising edge of En restarts; after T or En off Q = 0;
+  random times, 15 % long dark pause, 20 % quick double flash; since 0.5.1 a rising edge of En starts T seconds even
+  if En drops (motion detectors drop early), T = 0 = while En, R stops at once, the end keeps `min` after the last switch
+  (0.5.0's random test caught a 0.1 s switch at the end); after that Q = 0. Engine option `random` (seeded in tests,
+  300 seeds checked for >= 300 ms between switchings);
   `ctx.random` can be injected), template `halloween` (motion AND switch -> flicker -> bool output), editor
   "Beispiel einfügen" asks 1 = Solarium / 2 = Halloween. Engine test with fake clock. Not tried on the owner's KNX.
 

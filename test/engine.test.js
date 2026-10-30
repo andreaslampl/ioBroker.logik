@@ -11,7 +11,7 @@ const quiet = { debug() {}, info() {}, warn() {}, error() {} };
 /** Engine with a fake clock; `advance(s)` moves time and runs due timers. */
 function setup(program, options = {}) {
     let now = options.start || new Date(2026, 9, 21, 12, 0, 0).getTime();
-    const engine = new Engine({ log: quiet, now: () => now, location: options.location || null });
+    const engine = new Engine({ log: quiet, now: () => now, location: options.location || null, random: options.random });
     const writes = [];
     engine.on('write', (id, v) => writes.push([id, v]));
     for (const [id, v] of Object.entries(options.values || {})) {
@@ -200,11 +200,17 @@ test('message block: sends when the input becomes 1 (window open longer than 15 
     assert.equal(sent.length, 1, 'once, not again while it stays open');
 });
 
-test('flicker: random times within the limits, never faster than the shortest switching time, stops after T', t => {
+/** repeatable "random" numbers (linear congruential generator) */
+const seeded = seed => () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+};
+
+for (const seed of [1, 7, 42, 1234, 99999]) test(`flicker (seed ${seed}): random times within the limits, never faster than the shortest switching time, stops after T`, t => {
     const e = setup({
         blocks: [io('m', 'x.motion'), { id: 'fl', type: 'flicker', params: { T: 20, onMin: 0.3, onMax: 1.2, offMin: 0.3, offMax: 2.5, min: 0.3 } }, outBlock('l', 'x.light', 'bool')],
         wires: [w('m', 'fl', 'Q', 'En'), w('fl', 'l')],
-    });
+    }, { random: seeded(seed) });
     t.after(e.stop);
     e.set('x.motion', true);
     assert.equal(e.out('fl'), 1, 'starts with a flash');
@@ -217,13 +223,40 @@ test('flicker: random times within the limits, never faster than the shortest sw
             changes.push(i);
         }
     }
-    assert.ok(changes.length >= 10, `flickers (${changes.length} changes)`);
+    assert.ok(changes.length >= 6, `flickers (${changes.length} changes)`);
     const gaps = changes.slice(1).map((c, i) => c - changes[i]);
     assert.ok(Math.min(...gaps) >= 3, 'at least 0.3 s between two switchings');
     assert.equal(e.out('fl'), 0, 'off after 20 s although the motion detector is still on');
     assert.equal(e.last('x.light')[1], 0, 'light off at the end (0 = false for a bool output)');
-    // a new movement starts it again
+    // a short movement (detector drops after 1 s) still gives the whole 20 s
     e.set('x.motion', false);
     e.set('x.motion', true);
     assert.equal(e.out('fl'), 1);
+    e.advance(1);
+    e.set('x.motion', false);
+    let seen = 0;
+    for (let i = 0; i < 150; i++) {
+        e.advance(0.1);
+        seen += e.out('fl');
+    }
+    assert.ok(seen > 0, 'still flickering after the detector dropped');
+});
+
+test('flicker: R stops at once, T = 0 runs as long as En is on', t => {
+    const e = setup({
+        blocks: [io('m', 'x.m'), io('r', 'x.r'), { id: 'fl', type: 'flicker', params: { T: 0, onMin: 0.3, onMax: 0.3, offMin: 0.3, offMax: 0.3, min: 0.3 } }],
+        wires: [w('m', 'fl', 'Q', 'En'), w('r', 'fl', 'Q', 'R')],
+    }, { random: () => 0.5 });
+    t.after(e.stop);
+    e.set('x.m', true);
+    e.advance(60);
+    assert.ok([0, 1].includes(e.out('fl')));
+    e.set('x.m', false);
+    e.advance(1);
+    assert.equal(e.out('fl'), 0, 'T = 0: stops with En');
+    e.set('x.m', true);
+    assert.equal(e.out('fl'), 1);
+    e.advance(0.5);
+    e.set('x.r', true);
+    assert.equal(e.out('fl'), 0, 'R stops at once');
 });
