@@ -14,6 +14,9 @@ let programs = [];
 let prog = null; // program being edited (copy)
 let dirty = false;
 let selected = null; // {kind: 'block'|'wire', id}
+let marked = new Set(); // ids of marked blocks (several: Shift/Strg + click, frame, Strg+A)
+let selectMode = false; // drag on the empty area draws a frame instead of moving the view (touch)
+let pointer = null; // last pointer position on the canvas (paste target)
 let live = null;
 let clockOffset = 0; // adapter clock minus browser clock, for "vor 5 s"
 let ws = null;
@@ -72,16 +75,28 @@ function width(b) {
   return b.type === 'comment' ? 220 : b.type === 'input' || b.type === 'output' ? 170 : W;
 }
 
+/** Inputs drawn for a block: AND/OR & co. have 2-8 (param n). */
+function ins(b) {
+  const d = catalog[b.type];
+  if (!d.varInputs) return d.inputs;
+  const n = Math.min(8, Math.max(2, Math.round(Number(b.params.n)) || 4));
+  return d.inputs.slice(0, n);
+}
+
+function negOf(b) {
+  return Array.isArray(b.params.neg) ? b.params.neg : [];
+}
+
 function height(b) {
   const d = catalog[b.type];
   if (b.type === 'comment') return 20 + wrap(b.params.text).length * 15;
-  const rows = Math.max(d.inputs.length, d.outputs.length, 1);
+  const rows = Math.max(ins(b).length, d.outputs.length, 1);
   return HEAD + 10 + rows * ROW + (b.type === 'input' || b.type === 'output' ? 32 : 0);
 }
 
 function portPos(b, port, isOut) {
   const d = catalog[b.type];
-  const list = isOut ? d.outputs : d.inputs.map(i => i.name);
+  const list = isOut ? d.outputs : ins(b).map(i => i.name);
   const i = Math.max(0, list.indexOf(port));
   return { x: b.x + (isOut ? width(b) : 0), y: b.y + HEAD + 14 + i * ROW };
 }
@@ -148,7 +163,7 @@ function renderBlock(parent, b) {
   const d = catalog[b.type];
   const w = width(b);
   const h = height(b);
-  const cls = ['block', b.type === 'input' || b.type === 'output' ? 'io' : '', b.type === 'comment' ? 'note' : '', selected && selected.kind === 'block' && selected.id === b.id ? 'selected' : ''];
+  const cls = ['block', b.type === 'input' || b.type === 'output' ? 'io' : '', b.type === 'comment' ? 'note' : '', marked.has(b.id) ? 'selected' : ''];
   const g = el('g', { class: cls.join(' '), 'data-block': b.id, transform: `translate(${b.x},${b.y})` }, parent);
   el('rect', { class: 'body', width: w, height: h }, g);
   if (b.type === 'comment') {
@@ -162,10 +177,14 @@ function renderBlock(parent, b) {
   const labelX = 16 + Math.max(16, String(d.symbol).length * 11);
   const room = Math.floor((w - labelX - 6) / 6.5);
   el('text', { x: labelX, y: 17 }, g).textContent = d.label.length > room ? d.label.slice(0, room - 1) + '…' : d.label;
-  d.inputs.forEach((inp, i) => {
+  const neg = negOf(b);
+  ins(b).forEach((inp, i) => {
     const y = HEAD + 14 + i * ROW;
+    const inv = neg.includes(inp.name);
+    // inverted input: small circle like in a circuit diagram
+    if (inv) el('circle', { class: 'negb', cx: 10, cy: y, r: 4 }, g);
     el('circle', { class: 'port', cx: 0, cy: y, r: 6, 'data-port': inp.name, 'data-dir': 'in', 'data-block': b.id }, g);
-    el('text', { class: 'small', x: 10, y: y + 4 }, g).textContent = inp.name;
+    el('text', { class: 'small', x: inv ? 17 : 10, y: y + 4 }, g).textContent = inp.name;
   });
   d.outputs.forEach((out, i) => {
     const y = HEAD + 14 + i * ROW;
@@ -348,6 +367,7 @@ function addBlock(type, at) {
   const b = { id: newId(type), type, x: Math.round(pos.x / 10) * 10, y: Math.round(pos.y / 10) * 10, params };
   prog.blocks.push(b);
   selected = { kind: 'block', id: b.id };
+  marked = new Set([b.id]);
   setDirty(true);
   render();
   renderProps();
@@ -361,6 +381,24 @@ function renderProps() {
   box.textContent = '';
   if (!prog) {
     box.innerHTML = '<p class="muted">Noch kein Programm. Mit „＋ Neu“ anlegen oder ein Beispiel einfügen.</p>';
+    return;
+  }
+  if (marked.size > 1) {
+    const h = document.createElement('h3');
+    h.textContent = marked.size + ' Bausteine markiert';
+    box.appendChild(h);
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Ziehen verschiebt alle. Kopieren und auf einem anderen Blatt (Programm-Reiter) mit „Einfügen“ bzw. Strg+V einsetzen – Verbindungen zwischen den markierten Bausteinen kommen mit.';
+    box.appendChild(p);
+    for (const [text, fn] of [['📋 Kopieren', copyMarked], ['Löschen', deleteSelected]]) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = text;
+      btn.style.margin = '8px 8px 0 0';
+      btn.onclick = fn;
+      box.appendChild(btn);
+    }
     return;
   }
   const b = selected && selected.kind === 'block' ? blockById(selected.id) : null;
@@ -414,9 +452,20 @@ function renderProps() {
         input.oninput = () => searchStates(input.value);
       }
     }
+    if (p.min !== undefined) input.min = p.min;
+    if (p.max !== undefined) input.max = p.max;
     const apply = () => {
-      const v = p.type === 'bool' ? input.checked : p.type === 'number' || p.type === 'time' ? Number(input.value) : input.value.trim();
+      let v = p.type === 'bool' ? input.checked : p.type === 'number' || p.type === 'time' ? Number(input.value) : input.value.trim();
+      if (typeof v === 'number' && p.min !== undefined) v = Math.max(p.min, v);
+      if (typeof v === 'number' && p.max !== undefined) v = Math.min(p.max, v);
       b.params[p.key] = v;
+      if (p.key === 'n' && catalog[b.type].varInputs) {
+        // fewer inputs: drop wires and inversions of the inputs that are gone
+        const keep = new Set(ins(b).map(i => i.name));
+        prog.wires = prog.wires.filter(w => w.to.block !== b.id || keep.has(w.to.port));
+        b.params.neg = negOf(b).filter(n => keep.has(n));
+        input.value = v;
+      }
       setDirty(true);
       render();
       if (p.type === 'state') updateStateName(v, nameEl);
@@ -450,6 +499,36 @@ function renderProps() {
       help.textContent = p.help;
       box.appendChild(help);
     }
+  }
+  if (ins(b).length) {
+    const label = document.createElement('label');
+    label.textContent = 'Eingänge invertieren';
+    box.appendChild(label);
+    const row = document.createElement('div');
+    row.className = 'negrow';
+    for (const inp of ins(b)) {
+      const l = document.createElement('label');
+      l.className = 'neg';
+      const c = document.createElement('input');
+      c.type = 'checkbox';
+      c.checked = negOf(b).includes(inp.name);
+      c.onchange = () => {
+        const set = new Set(negOf(b));
+        if (c.checked) set.add(inp.name);
+        else set.delete(inp.name);
+        b.params.neg = ins(b).map(i => i.name).filter(n => set.has(n));
+        if (!b.params.neg.length) delete b.params.neg;
+        setDirty(true);
+        render();
+      };
+      l.append(c, ' ' + inp.name);
+      row.appendChild(l);
+    }
+    box.appendChild(row);
+    const help = document.createElement('div');
+    help.className = 'help';
+    help.textContent = 'Kreis am Eingang = invertiert (0 ↔ 1), egal ob verbunden oder nicht' + (b.type === 'output' ? ' – so lässt sich auch der geschriebene Wert umdrehen' : '');
+    box.appendChild(help);
   }
   if (live && live.blocks && live.blocks[b.id] && $('live').checked) {
     const v = document.createElement('p');
@@ -545,6 +624,7 @@ $('canvas').addEventListener('pointerdown', e => {
     drag = { kind: 'wire', block: t.getAttribute('data-block'), port: t.getAttribute('data-port'), dir: t.getAttribute('data-dir') };
   } else if (t.classList.contains('wirehit')) {
     selected = { kind: 'wire', id: t.getAttribute('data-wire') };
+    marked = new Set();
     render();
     renderProps();
     return;
@@ -559,12 +639,30 @@ $('canvas').addEventListener('pointerdown', e => {
       return;
     }
     Object.assign(lastDown, { id, at: now });
-    selected = { kind: 'block', id };
-    drag = { kind: 'move', block: b, dx: pt.x - b.x, dy: pt.y - b.y, moved: false };
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      // add to / remove from the marked blocks
+      if (marked.has(id)) marked.delete(id);
+      else marked.add(id);
+      selected = marked.size === 1 ? { kind: 'block', id: [...marked][0] } : null;
+      render();
+      renderProps();
+      return;
+    }
+    const group = marked.has(id) && marked.size > 1;
+    if (!group) {
+      marked = new Set([id]);
+      selected = { kind: 'block', id };
+    }
+    // a marked group moves together
+    const moving = (group ? [...marked].map(blockById) : [b]).filter(Boolean).map(x => ({ b: x, x: x.x, y: x.y }));
+    drag = { kind: 'move', block: b, id, group, moving, start: pt, moved: false };
     render();
     renderProps();
+  } else if (selectMode || e.shiftKey) {
+    drag = { kind: 'frame', start: pt, add: e.shiftKey && !selectMode ? new Set(marked) : new Set() };
   } else {
     selected = null;
+    marked = new Set();
     drag = { kind: 'pan', x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
     render();
     renderProps();
@@ -573,17 +671,32 @@ $('canvas').addEventListener('pointerdown', e => {
 });
 
 $('canvas').addEventListener('pointermove', e => {
-  if (!drag) return;
   const pt = toCanvas(e.clientX, e.clientY);
+  pointer = pt;
+  if (!drag) return;
   if (drag.kind === 'pan') {
     view.x = drag.vx + e.clientX - drag.x;
     view.y = drag.vy + e.clientY - drag.y;
     $('viewport').setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`);
   } else if (drag.kind === 'move') {
-    drag.block.x = Math.round((pt.x - drag.dx) / 10) * 10;
-    drag.block.y = Math.round((pt.y - drag.dy) / 10) * 10;
+    const dx = Math.round((pt.x - drag.start.x) / 10) * 10;
+    const dy = Math.round((pt.y - drag.start.y) / 10) * 10;
+    if (!dx && !dy && !drag.moved) return;
+    for (const m of drag.moving) {
+      m.b.x = m.x + dx;
+      m.b.y = m.y + dy;
+    }
     drag.moved = true;
     render();
+  } else if (drag.kind === 'frame') {
+    const x = Math.min(drag.start.x, pt.x);
+    const y = Math.min(drag.start.y, pt.y);
+    const f = $('frame');
+    f.setAttribute('x', x);
+    f.setAttribute('y', y);
+    f.setAttribute('width', Math.abs(pt.x - drag.start.x));
+    f.setAttribute('height', Math.abs(pt.y - drag.start.y));
+    drag.end = pt;
   } else if (drag.kind === 'wire') {
     const b = blockById(drag.block);
     const p = portPos(b, drag.port, drag.dir === 'out');
@@ -594,6 +707,31 @@ $('canvas').addEventListener('pointermove', e => {
 $('canvas').addEventListener('pointerup', e => {
   if (!drag) return;
   if (drag.kind === 'move' && drag.moved) setDirty(true);
+  if (drag.kind === 'move' && drag.group && !drag.moved) {
+    // click (without moving) on one block of a marked group: only that one
+    marked = new Set([drag.id]);
+    selected = { kind: 'block', id: drag.id };
+    render();
+    renderProps();
+  }
+  if (drag.kind === 'frame') {
+    const f = $('frame');
+    f.setAttribute('width', 0);
+    f.setAttribute('height', 0);
+    const end = drag.end || drag.start;
+    const x0 = Math.min(drag.start.x, end.x);
+    const x1 = Math.max(drag.start.x, end.x);
+    const y0 = Math.min(drag.start.y, end.y);
+    const y1 = Math.max(drag.start.y, end.y);
+    marked = drag.add;
+    // every block touched by the frame
+    for (const b of prog.blocks) {
+      if (b.x < x1 && b.x + width(b) > x0 && b.y < y1 && b.y + height(b) > y0) marked.add(b.id);
+    }
+    selected = marked.size === 1 ? { kind: 'block', id: [...marked][0] } : null;
+    render();
+    renderProps();
+  }
   if (drag.kind === 'wire') {
     $('drag').setAttribute('d', '');
     const hit = document.elementFromPoint(e.clientX, e.clientY);
@@ -633,22 +771,138 @@ $('canvasWrap').addEventListener('drop', e => {
 });
 
 function deleteSelected() {
-  if (!prog || !selected) return;
-  if (selected.kind === 'wire') {
+  if (!prog || (!selected && !marked.size)) return;
+  if (selected && selected.kind === 'wire') {
     prog.wires = prog.wires.filter(w => w.id !== selected.id);
   } else {
-    prog.blocks = prog.blocks.filter(b => b.id !== selected.id);
-    prog.wires = prog.wires.filter(w => w.from.block !== selected.id && w.to.block !== selected.id);
+    const gone = new Set(marked.size ? marked : [selected.id]);
+    prog.blocks = prog.blocks.filter(b => !gone.has(b.id));
+    prog.wires = prog.wires.filter(w => !gone.has(w.from.block) && !gone.has(w.to.block));
   }
   selected = null;
+  marked = new Set();
   setDirty(true);
   render();
   renderProps();
 }
 
+// ---------------- copy / paste (also into another program) ----------------
+
+let clip = null;
+const CLIP_KEY = 'logik.clipboard';
+
+function copyMarked() {
+  if (!prog) return;
+  const ids = marked.size ? marked : selected && selected.kind === 'block' ? new Set([selected.id]) : new Set();
+  if (!ids.size) return show('Zuerst Bausteine markieren (Shift/Strg + Klick, Rahmen ziehen oder Strg+A).', true);
+  const blocks = prog.blocks.filter(b => ids.has(b.id));
+  const wires = prog.wires.filter(w => ids.has(w.from.block) && ids.has(w.to.block));
+  clip = JSON.parse(JSON.stringify({ blocks, wires }));
+  try {
+    localStorage.setItem(CLIP_KEY, JSON.stringify(clip));
+  } catch (e) {
+    // private window: the copy still works in this tab
+  }
+  updateClipButtons();
+  show(blocks.length + ' Baustein(e) kopiert – im Ziel-Programm „Einfügen“ (Strg+V).');
+}
+
+function readClip() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CLIP_KEY) || 'null');
+    if (c && Array.isArray(c.blocks)) clip = c;
+  } catch (e) {
+    // keep what this tab copied
+  }
+  return clip;
+}
+
+function paste() {
+  if (!prog) return show('Zuerst ein Programm anlegen oder öffnen.', true);
+  const c = readClip();
+  if (!c || !c.blocks.length) return show('Nichts kopiert.', true);
+  const known = c.blocks.filter(b => catalog[b.type]);
+  // top left corner of the copy goes to the mouse position (or the middle of the view), on the 10 px grid
+  const r = $('canvas').getBoundingClientRect();
+  const at = pointer || toCanvas(r.left + r.width / 3, r.top + r.height / 3);
+  const x0 = Math.min(...known.map(b => b.x));
+  const y0 = Math.min(...known.map(b => b.y));
+  let dx = Math.round((at.x - x0) / 10) * 10;
+  let dy = Math.round((at.y - y0) / 10) * 10;
+  // pasting twice at the same place: shift so the copies do not hide each other
+  while (known.some(b => prog.blocks.some(o => o.x === b.x + dx && o.y === b.y + dy))) {
+    dx += 30;
+    dy += 30;
+  }
+  const map = {};
+  marked = new Set();
+  for (const b of known) {
+    const id = newId(b.type);
+    map[b.id] = id;
+    prog.blocks.push({ ...JSON.parse(JSON.stringify(b)), id, x: b.x + dx, y: b.y + dy });
+    marked.add(id);
+  }
+  let n = 1;
+  for (const w of c.wires) {
+    if (!map[w.from.block] || !map[w.to.block]) continue;
+    while (prog.wires.some(x => x.id === 'w' + n)) n++;
+    prog.wires.push({ id: 'w' + n, from: { block: map[w.from.block], port: w.from.port }, to: { block: map[w.to.block], port: w.to.port } });
+  }
+  selected = marked.size === 1 ? { kind: 'block', id: [...marked][0] } : null;
+  setDirty(true);
+  render();
+  renderProps();
+  for (const b of known) if (b.params && b.params.state) updateStateName(b.params.state, null);
+  show(known.length + ' Baustein(e) eingefügt – markiert, zum Verschieben ziehen.');
+}
+
+function updateClipButtons() {
+  $('paste').disabled = !prog || !(readClip() && clip.blocks.length);
+  $('copy').disabled = !prog;
+}
+
+function setSelectMode(on) {
+  selectMode = on;
+  $('selectMode').classList.toggle('on', on);
+  $('canvas').classList.toggle('framing', on);
+}
+
+$('copy').onclick = copyMarked;
+$('paste').onclick = paste;
+$('selectMode').onclick = () => setSelectMode(!selectMode);
+window.addEventListener('storage', e => {
+  if (e.key === CLIP_KEY) updateClipButtons();
+});
+$('canvas').addEventListener('pointerleave', () => {
+  if (!drag) pointer = null;
+});
+
 document.addEventListener('keydown', e => {
   if (document.querySelector('.overlay')) return;
   const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (!typing && ctrl && (e.key === 'c' || e.key === 'C')) {
+    e.preventDefault();
+    copyMarked();
+  }
+  if (!typing && ctrl && (e.key === 'v' || e.key === 'V')) {
+    e.preventDefault();
+    paste();
+  }
+  if (!typing && ctrl && (e.key === 'a' || e.key === 'A') && prog) {
+    e.preventDefault();
+    marked = new Set(prog.blocks.map(b => b.id));
+    selected = marked.size === 1 ? { kind: 'block', id: [...marked][0] } : null;
+    render();
+    renderProps();
+  }
+  if (!typing && e.key === 'Escape') {
+    marked = new Set();
+    selected = null;
+    setSelectMode(false);
+    render();
+    renderProps();
+  }
   if (!typing && (e.key === 'Delete' || e.key === 'Backspace')) {
     e.preventDefault();
     deleteSelected();
@@ -682,10 +936,12 @@ function openProgram(id) {
   prog = p ? JSON.parse(JSON.stringify(p)) : null;
   prog && prog.wires.forEach((w, i) => { w.id = w.id || 'w' + (i + 1); });
   selected = null;
+  marked = new Set();
   live = null;
   setDirty(false);
   fit();
   renderTabs();
+  updateClipButtons();
   render();
   renderProps();
   watch();

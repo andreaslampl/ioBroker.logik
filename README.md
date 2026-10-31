@@ -28,8 +28,17 @@ Datenpunkt `logik.0.info.editorUrl`, z. B. `http://<ioBroker-IP>:8097/`.
 - **Einstellen**: Baustein anklicken → rechts die Parameter. Die ID kann auch direkt eingetippt
   oder aus dem Admin (Objekte → ID kopieren) eingefügt werden.
 - **Löschen**: Baustein oder Leitung anklicken, dann `Entf`.
+- **Mehrere markieren**: `Shift`/`Strg` + Klick auf Bausteine, **Shift + Rahmen ziehen** oder **⬚ Markieren**
+  (dann zieht man auf der Fläche einen Rahmen – praktisch am Touch-Bildschirm), `Strg+A` = alle, `Esc` hebt auf.
+  Markierte Bausteine werden gemeinsam verschoben und gelöscht.
+- **Kopieren auf ein anderes Blatt**: markieren → **📋 Kopieren** (`Strg+C`) → anderen Programm-Reiter öffnen →
+  **Einfügen** (`Strg+V`). Die Verbindungen zwischen den markierten Bausteinen kommen mit, Datenpunkte und
+  Einstellungen auch. Eingefügt wird an der Mausposition; danach speichern.
+- **Eingänge invertieren**: Baustein anklicken → rechts **„Eingänge invertieren“** – jeder Eingang jedes Bausteins
+  (auch am Ausgang-Baustein, um den geschriebenen Wert umzudrehen). Ein kleiner Kreis am Eingang zeigt es an.
 - **Verschieben/Zoomen**: Fläche ziehen, Mausrad; **⤢ Alles** zeigt das ganze Programm.
-- **Speichern** (`Strg+S`): das Programm läuft sofort mit den neuen Einstellungen.
+- **Speichern** (`Strg+S`): das Programm läuft sofort mit den neuen Einstellungen; ändert sich dadurch ein Ergebnis
+  (z. B. Eingang invertiert), wird der Ausgang gleich geschrieben.
 - **aktiv**: Programm ein/aus. **Live**: Leitungen mit Wert 1 werden grün, Zahlenwerte stehen an
   den Ausgängen, laufende Zeiten mit ⏱ Restzeit.
 - **Live bei Ein-/Ausgängen**: Die Lampe oben rechts leuchtet grün, wenn das Signal ein ist. Die
@@ -40,7 +49,7 @@ Datenpunkt `logik.0.info.editorUrl`, z. B. `http://<ioBroker-IP>:8097/`.
     ✓ = vom Gerät bestätigt, ⏳ = gesendet, noch nicht bestätigt, ≠ = Datenpunkt hat einen anderen
     Wert (z. B. von Hand geschaltet - Ausgänge werden nur bei einer Änderung geschrieben).
 
-Ausgänge werden geschrieben, **wenn sich das Ergebnis ändert** - nicht beim Start. Ein von Hand
+Ausgänge werden geschrieben, **wenn sich das Ergebnis ändert** - nicht beim Start des Adapters. Ein von Hand
 geschaltetes Licht wird also nicht überschrieben, nur weil der Adapter neu startet.
 
 ## Bausteine
@@ -48,7 +57,7 @@ geschaltetes Licht wird also nicht überschrieben, nur weil der Adapter neu star
 | Gruppe | Bausteine |
 | --- | --- |
 | Ein-/Ausgänge | Eingang (Datenpunkt, optional invertiert), Ausgang (Ein/Aus oder Zahl), Konstante, Notiz |
-| Grundfunktionen | UND, NAND, ODER, NOR, XOR, NICHT, Flanke steigend, Flanke fallend |
+| Grundfunktionen | UND, NAND, ODER, NOR (je 2–8 Eingänge, „Anzahl Eingänge“), XOR, NICHT, Flanke steigend, Flanke fallend |
 | Heizung | Raumregler (PI) |
 | Zeiten | Einschalt-, Ausschalt-, Ein-/Ausschaltverzögerung, Wischrelais, flankengetriggerter Impuls, Treppenlichtschalter, Taktgeber, Flackern (zufällig) |
 | Speicher und Zähler | RS-Speicher, Stromstoßrelais, Vor-/Rückwärtszähler, Betriebsstundenzähler (remanent: bleiben nach Neustart erhalten) |

@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "logik",
-    "version": "0.6.2",
+    "version": "0.7.0",
     "news": {
+      "0.7.0": {
+        "en": "Editor: mark several blocks (Shift/Ctrl + click, frame, Ctrl+A), move/delete them together, copy and paste into another program (Ctrl+C / Ctrl+V); AND/NAND/OR/NOR with 2-8 inputs; every block input can be inverted (circle); after saving, a changed result is written at once",
+        "de": "Editor: mehrere Bausteine markieren (Shift/Strg + Klick, Rahmen, Strg+A), gemeinsam verschieben/löschen, kopieren und in ein anderes Programm einfügen (Strg+C / Strg+V); UND/NAND/ODER/NOR mit 2–8 Eingängen; jeder Eingang jedes Bausteins invertierbar (Kreis); nach dem Speichern wird ein geändertes Ergebnis sofort geschrieben"
+      },
       "0.6.2": {
         "en": "Room controller: the humidity lock for cooling is optional and off by default (the heat pump has its own)",
         "de": "Raumregler: Feuchte-Sperre beim Kühlen ist optional und standardmäßig aus (die Wärmepumpe hat eine eigene)"

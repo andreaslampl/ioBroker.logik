@@ -64,6 +64,15 @@ exit motion then door contact open -> off) - shipped as template `solarium`.
   `rhMax` (default 65 %, 0 = off) -> 0 % while too humid; template inputs heat/cool (inverted: KNX DPT 1.100 1 = heating)
   and humidity. 0.6.2: owner's heat pump has its own humidity lock -> `rhMax` default 0 (off), RH not in the template.
 
+- 0.7.0: owner asked to mark everything and copy it to another sheet, up to 8 inputs on AND/OR, and said inverting
+  did not work with a data point chosen (likely: the input invert was saved but outputs are only written on a change, and
+  reload did not count as one) -> editor `marked` set (Shift/Ctrl click, frame with Shift or ⬚ Markieren, Ctrl+A, group
+  move/delete), clipboard {blocks, wires} in localStorage `logik.clipboard` (Ctrl+C/V, paste at the pointer, new ids);
+  gates `varInputs` + param `n` (2-8, `gateInputs()`; fewer inputs drop their wires/neg); `params.neg` = inverted block
+  inputs (engine `block.neg`, applied after open values; editor bubble `.negb` + checkboxes); `Engine.load()` carries
+  `started/written/writtenAt` of outputs/notify with the same id + data point over a reload, so a saved change writes its
+  new result at once (adapter start still writes nothing). Checked in Playwright (scratchpad lg/sel.js).
+
 ## Conventions
 
 - UI texts and README in German, code and comments in English.

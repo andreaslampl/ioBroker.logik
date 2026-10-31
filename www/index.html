@@ -13,6 +13,9 @@
   <button id="fromTemplate" type="button" title="Beispiel einfügen">Beispiel</button>
   <span class="grow"></span>
   <label class="switch" title="Programm läuft"><input id="enabled" type="checkbox"> aktiv</label>
+  <button id="selectMode" type="button" title="Rahmen ziehen markiert mehrere Bausteine (sonst Shift + ziehen)">⬚ Markieren</button>
+  <button id="copy" type="button" title="Markierte Bausteine kopieren (Strg+C)">📋 Kopieren</button>
+  <button id="paste" type="button" title="In dieses Programm einfügen (Strg+V)" disabled>Einfügen</button>
   <button id="fitView" type="button" title="Ganzes Programm anzeigen">⤢ Alles</button>
   <label class="switch" title="Werte live anzeigen"><input id="live" type="checkbox" checked> Live</label>
   <button id="rename" type="button">Umbenennen</button>
@@ -33,9 +36,10 @@
         <g id="wires"></g>
         <g id="blocks"></g>
         <path id="drag" class="wire dragging" d=""/>
+        <rect id="frame" x="0" y="0" width="0" height="0"/>
       </g>
     </svg>
-    <div id="hint">Baustein links anklicken oder auf die Fläche ziehen · Doppelklick auf Ein-/Ausgang wählt den Datenpunkt · Ausgang (rechts) mit Eingang (links) verbinden · Entf löscht · Mausrad zoomt · Fläche ziehen verschiebt</div>
+    <div id="hint">Baustein links anklicken oder auf die Fläche ziehen · Doppelklick auf Ein-/Ausgang wählt den Datenpunkt · Ausgang (rechts) mit Eingang (links) verbinden · Entf löscht · Mausrad zoomt · Fläche ziehen verschiebt · Shift/Strg + Klick oder Shift + Rahmen markiert mehrere · Strg+C / Strg+V kopiert, auch in ein anderes Programm</div>
   </div>
   <aside id="props"><p class="muted">Baustein anklicken, um ihn einzustellen.</p></aside>
 </div>

@@ -359,3 +359,27 @@ test('room controller (PI): floor cooling with the same valves - dead band, swit
     e.advance(60);
     assert.equal(e.out('pi', 'Y'), 0);
 });
+
+test('gates with 2-8 inputs, inverted block inputs, a changed program writes its new result after saving', t => {
+    const blocks = [io('a', 'x.a'), io('b', 'x.b'), { id: 'and', type: 'and', params: { n: 8 } }, { id: 'or', type: 'or', params: { n: 6, neg: ['I6'] } }, outBlock('q', 'x.q'), outBlock('r', 'x.r')];
+    const wires = [w('a', 'and', 'Q', 'I1'), w('b', 'and', 'Q', 'I8'), w('and', 'q'), w('a', 'or', 'Q', 'I6'), w('or', 'r')];
+    const e = setup({ blocks, wires }, { values: { 'x.a': 1, 'x.b': 0 } });
+    t.after(e.stop);
+    assert.equal(e.out('and'), 0, 'I8 counts with n = 8');
+    assert.equal(e.out('or'), 0, 'I6 inverted: a = 1 -> 0');
+    e.set('x.b', 1);
+    assert.equal(e.out('and'), 1);
+    e.set('x.a', 0);
+    assert.deepEqual(e.last('x.r'), ['x.r', 1]);
+    // fewer inputs: I8 is no longer evaluated (open would be 1 anyway for AND; check OR with n = 2)
+    const e2 = setup({ blocks: [io('a', 'x.a'), { id: 'or', type: 'or', params: { n: 2 } }], wires: [w('a', 'or', 'Q', 'I3')] }, { values: { 'x.a': 1 } });
+    t.after(e2.stop);
+    assert.equal(e2.out('or'), 0, 'input 3 of a 2-input OR is ignored');
+    // output inverted in the editor and saved -> written at once; at the first start nothing is written
+    const before = e.writes.length;
+    const inv = blocks.map(x => (x.id === 'q' ? { ...x, params: { ...x.params, neg: ['I'] } } : x));
+    e.engine.load([{ id: 'p', name: 'Test', blocks: inv, wires }]);
+    assert.deepEqual(e.writes.slice(before), [['x.q', 1]], 'and = 0 now, inverted -> 1');
+    e.engine.load([{ id: 'p', name: 'Test', blocks: inv, wires }]);
+    assert.equal(e.writes.length, before + 1, 'saving again without changes writes nothing');
+});

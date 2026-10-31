@@ -99,3 +99,11 @@ button.dirty::after { content: ' •'; }
 .pfoot { display: flex; gap: 8px; align-items: center; padding: 10px 14px; }
 .pinfo { flex: 1; min-width: 0; }
 .pid { font-family: ui-monospace, monospace; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* marking several blocks, inverted inputs */
+#frame { fill: rgba(31, 111, 235, .08); stroke: var(--accent); stroke-dasharray: 5 4; pointer-events: none; }
+#canvas.framing { cursor: crosshair; }
+#selectMode.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.negb { fill: var(--panel); stroke: var(--fg); stroke-width: 1.5; pointer-events: none; }
+#props .negrow { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+#props label.neg { display: inline-flex; align-items: center; margin: 0; font-weight: 400; cursor: pointer; }
